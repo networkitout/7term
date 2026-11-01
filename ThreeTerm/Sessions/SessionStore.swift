@@ -23,8 +23,9 @@ final class SessionStore {
         return selected.state != .running
     }
 
-    func open(_ target: SSHTarget) {
-        let session = TerminalSession(target: target)
+    /// Opens a new tab. `name` is a saved host's name; quick connections pass nil.
+    func open(_ target: SSHTarget, name: String? = nil) {
+        let session = TerminalSession(target: target, name: name)
         sessions.append(session)
         selectedID = session.id
         session.start()

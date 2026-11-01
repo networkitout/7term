@@ -21,6 +21,8 @@ final class TerminalSession: Identifiable {
 
     let id = UUID()
     let target: SSHTarget
+    /// The saved host's name, when the tab came from the host list.
+    let name: String?
     private(set) var state: State = .idle
     private(set) var remoteTitle: String?
 
@@ -28,13 +30,17 @@ final class TerminalSession: Identifiable {
     @ObservationIgnored private var process: LocalProcess?
     @ObservationIgnored private var bridge: ProcessBridge?
 
+    /// A saved host keeps its name; a quick connection shows what the remote
+    /// shell sets as the title, falling back to user@host.
     var title: String {
+        if let name, !name.isEmpty { return name }
         guard let remoteTitle, !remoteTitle.isEmpty else { return target.displayName }
         return remoteTitle
     }
 
-    init(target: SSHTarget) {
+    init(target: SSHTarget, name: String? = nil) {
         self.target = target
+        self.name = name
         terminalView = TerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 500))
         TerminalTheme.threeTerm.apply(to: terminalView)
         terminalView.terminalDelegate = self

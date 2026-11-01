@@ -6,12 +6,12 @@ A small native macOS SSH and SFTP client for a home lab: a list of hosts, one cl
 
 ## Status
 
-Milestone 1 of 7: a window with tabs, quick connect (`user@host:port` or an ssh_config alias), and resize handling. No saved hosts yet.
+Milestones 1 and 2 of 7 are written: tabs, quick connect, and a saved host list grouped by tag, with type-to-filter and a one-time import from `~/.ssh/config`. Saved hosts live in `~/Library/Application Support/3 Term/hosts.sqlite`.
 
 | # | Milestone | State |
 |---|---|---|
-| 1 | Terminal in a window, with tabs | In progress |
-| 2 | Saved host list, tags, filter, import from `~/.ssh/config` | |
+| 1 | Terminal in a window, with tabs | Committed |
+| 2 | Saved host list, tags, filter, import from `~/.ssh/config` | Written, needs a build |
 | 3 | Per-tab logging to `~/Documents/3 Term/Logs/`, SHA-256 on close | |
 | 4 | Themes (3 Term red, 6 Bits green, dark, light), global ⌘+ / ⌘- / ⌘0 | |
 | 5 | SFTP from the same host entry, hand-off to Transmit or ForkLift | |
@@ -47,15 +47,18 @@ swift test
 project.yml                  XcodeGen spec
 ThreeTerm/App                App entry, menus, quit confirmation
 ThreeTerm/Sessions           Tabs and the ssh process behind each one
+ThreeTerm/Hosts              Saved host library, ssh_config import, reachability test
 ThreeTerm/UI                 Views and theme
-Packages/ThreeTermCore       Parsing, child environment, later logging
+Packages/ThreeTermCore       Parsing, host storage (GRDB), ssh_config scanning, later logging
 ```
 
 ## Keyboard
 
 | Keys | Action |
 |---|---|
-| ⌘T | New connection |
+| ⌘N | New saved host |
+| ⌘T | Quick connect |
+| Return or double-click | Connect to the selected host |
 | ⌘W | Close tab (closes the window when no tabs are open) |
 | ⇧⌘] / ⇧⌘[ | Next / previous tab |
 | ⇧⌘R | Reconnect an ended session |
