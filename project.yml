@@ -1,0 +1,45 @@
+# XcodeGen spec. Generate the Xcode project with:  xcodegen generate
+# The generated ThreeTerm.xcodeproj is not committed; this file is the source of truth.
+name: ThreeTerm
+
+options:
+  bundleIdPrefix: com.networkitout
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+packages:
+  SwiftTerm:
+    url: https://github.com/migueldeicaza/SwiftTerm
+    from: 1.99.2
+  ThreeTermCore:
+    path: Packages/ThreeTermCore
+
+targets:
+  ThreeTerm:
+    type: application
+    platform: macOS
+    sources:
+      - ThreeTerm
+    dependencies:
+      - package: SwiftTerm
+      - package: ThreeTermCore
+    scheme: {}
+    settings:
+      base:
+        PRODUCT_NAME: "3 Term"
+        PRODUCT_MODULE_NAME: ThreeTerm
+        PRODUCT_BUNDLE_IDENTIFIER: com.networkitout.threeterm
+        CODE_SIGN_STYLE: Automatic
+        # ssh needs ~/.ssh, agent sockets and /usr/bin/ssh, so no App Sandbox.
+        ENABLE_APP_SANDBOX: NO
+        ENABLE_HARDENED_RUNTIME: YES
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: "3 Term"
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
