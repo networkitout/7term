@@ -4,6 +4,8 @@ A small native macOS SSH and SFTP client for a home lab: a list of hosts, one cl
 
 7 Term doesn't implement SSH. It runs the system's `/usr/bin/ssh` and `/usr/bin/sftp` in a pseudo-terminal and shows them with [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm), so your `~/.ssh/config`, keys, agents, ProxyJump and `known_hosts` all work as they already do.
 
+**[User guide](docs/user-guide.md)**: how to use 7 Term.
+
 ## Status
 
 Milestones 1 to 9 are built and in use. Saved hosts live in `~/Library/Application Support/7 Term/hosts.sqlite`.
