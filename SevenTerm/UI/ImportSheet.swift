@@ -3,6 +3,7 @@ import SevenTermCore
 
 /// Offers the Host aliases in ~/.ssh/config as saved hosts.
 struct ImportSheet: View {
+    @Environment(\.chrome) private var chrome
     let aliases: [SSHConfigAlias]
     let savedHostnames: Set<String>
     let onImport: (_ aliases: [SSHConfigAlias], _ tag: String) -> Void
@@ -75,7 +76,7 @@ struct ImportSheet: View {
                         onImport(aliases.filter { chosen.contains($0.alias) }, tag)
                     }
                     .keyboardShortcut(.defaultAction)
-                    .tint(Brand.red)
+                    .tint(chrome.accent)
                     .disabled(chosen.isEmpty)
                 }
             }

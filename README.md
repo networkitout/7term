@@ -13,9 +13,9 @@ Milestones 1 to 3 of 7 are built and tested: tabs, quick connect, a saved host l
 | 1 | Terminal in a window, with tabs | Committed |
 | 2 | Saved host list, tags, filter, import from `~/.ssh/config` | Committed |
 | 3 | Per-tab logging to `~/Documents/7 Term/Logs/`, SHA-256 on close | Tested on a live host |
-| 4 | Themes (7 Term, 6 Bits, Night Red, Dark, Light, .itermcolors import), global ⌘+ / ⌘- / ⌘0 | Built |
-| 5 | SFTP from the same host entry, hand-off to Transmit or ForkLift | Written, needs a build |
-| 6 | Credentials: agent, key file, Keychain password behind Touch ID | |
+| 4 | Themes (7 Term, 6 Bits, Night Red, Dark, Light, .itermcolors import), global ⌘+ / ⌘- / ⌘0 | Committed |
+| 5 | SFTP from the same host entry, hand-off to Transmit or ForkLift | Committed |
+| 6 | Credentials: agent, key file, Keychain password behind Touch ID | Written, needs a build |
 | 7 | JSON backup of hosts and settings to iCloud Drive | |
 
 ## Build
@@ -44,6 +44,18 @@ Logging is off until you turn it on for a tab (⇧⌘L or the Log button), or ti
 | `….txt` | Readable copy: colors stripped, overwrites applied, full-screen programs replaced by one line |
 
 Verify a log with `shasum -a 256 -c <file>.log.sha256` in its folder. If 7 Term quits without closing a log, the next launch hashes it and marks it `"closedCleanly": false`.
+
+## Credentials
+
+Each saved host picks how it signs in (Edit Host ▸ Authentication):
+
+| Method | What 7 Term does |
+|---|---|
+| Agent / ssh_config (default) | Nothing extra. ssh uses your agent (1Password, Secretive, ssh-agent) and `~/.ssh/config`, then asks in the terminal. |
+| Key file | Adds `-i <key> -o IdentitiesOnly=yes`. |
+| Password in Keychain | Stores the password in your login Keychain. On connect, ssh asks 7 Term for it through `SSH_ASKPASS`; 7 Term requires Touch ID (or your Mac password) and hands it straight to ssh. It is never typed into the terminal, so a remote host can't fake a prompt to collect it. |
+
+For password hosts, ssh's other questions (an unknown host key, a one-time code, a key passphrase) appear as native dialogs showing ssh's exact text. 7 Term's own binary is the helper, so there is nothing extra to install or sign.
 
 ## Appearance
 

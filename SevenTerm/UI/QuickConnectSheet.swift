@@ -4,6 +4,7 @@ import SevenTermCore
 /// Milestone 1's way in: type a destination, see the exact ssh command, connect.
 /// The saved host list replaces this as the main path in milestone 2.
 struct QuickConnectSheet: View {
+    @Environment(\.chrome) private var chrome
     let connect: (SSHTarget, TerminalSession.Kind) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -30,12 +31,12 @@ struct QuickConnectSheet: View {
                 Spacer()
                 Button("Cancel", role: .cancel) { dismiss() }
                     .keyboardShortcut(.cancelAction)
-                Button("SFTP") { submit(.sftp) }
+                Button("SFTP") { submit(.files) }
                     .disabled(target == nil)
-                    .help("Open an sftp session instead of a shell")
+                    .help("Browse files over SFTP instead of opening a shell")
                 Button("Connect") { submit(.ssh) }
                     .keyboardShortcut(.defaultAction)
-                    .tint(Brand.red)
+                    .tint(chrome.accent)
                     .disabled(target == nil)
             }
         }

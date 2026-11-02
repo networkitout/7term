@@ -29,6 +29,8 @@ final class Appearance {
 
     /// Called after any change; SessionStore uses it to restyle open tabs.
     @ObservationIgnored var onChange: (() -> Void)?
+    /// Also called after any change; the backup uses it.
+    @ObservationIgnored var onSettingsChange: (() -> Void)?
 
     @ObservationIgnored private let defaults = UserDefaults.standard
     @ObservationIgnored private let store = PaletteStore(
@@ -96,6 +98,20 @@ final class Appearance {
         try store.delete(id: id)
         importedPalettes = store.load()
         if paletteID == id { paletteID = BuiltInPalettes.defaultID }
+        changed()
+    }
+
+    /// Applies settings and imported themes from a backup.
+    func applyBackup(_ settings: BackupSnapshot.Settings, palettes: [TerminalPalette]) {
+        for palette in palettes where !importedPalettes.contains(where: { $0.id == palette.id }) {
+            try? store.save(palette)
+        }
+        importedPalettes = store.load()
+        fontFamily = settings.fontFamily
+        fontSize = FontSizeSteps.clamped(settings.fontSize)
+        if palettes.contains(where: { $0.id == settings.paletteID }) || BuiltInPalettes.palette(id: settings.paletteID) != nil {
+            paletteID = settings.paletteID
+        }
     }
 
     /// Monospaced font families installed on this Mac.
@@ -107,5 +123,13 @@ final class Appearance {
 
     private func changed() {
         onChange?()
+        onSettingsChange?()
+        updateDockIcon()
+    }
+
+    /// The 6 Bits theme also turns the Dock icon green. (The icon in Finder
+    /// stays red: that one is fixed in the app bundle.)
+    func updateDockIcon() {
+        NSApp?.applicationIconImage = paletteID == "6bits" ? NSImage(named: "AppIconGreen") : nil
     }
 }

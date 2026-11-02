@@ -46,9 +46,11 @@ enum AskPass {
         let hostName = environment[hostNameKey] ?? "this host"
         let lowered = prompt.lowercased()
 
-        if lowered.hasSuffix("password:") || lowered.hasSuffix("password: ") {
-            guard !hostID.isEmpty,
-                  let password = PasswordVault.read(hostID: hostID, reason: "connect to \(hostName)")
+        // A host with a Keychain password: Touch ID, then the stored one.
+        // Without one (a file browser tab has no terminal to type into), the
+        // password prompt falls through to the dialog below.
+        if !hostID.isEmpty, lowered.hasSuffix("password:") || lowered.hasSuffix("password: ") {
+            guard let password = PasswordVault.read(hostID: hostID, reason: "connect to \(hostName)")
             else { return 1 }
             return answer(password)
         }

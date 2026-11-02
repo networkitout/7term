@@ -169,6 +169,30 @@ public final class HostLibrary: Sendable {
         return added
     }
 
+    /// Adds the backed-up hosts whose id isn't already here, keeping their
+    /// ids, dates and tags. Existing hosts are never changed. Returns how
+    /// many were added.
+    @discardableResult
+    public func restore(_ hosts: [BackupSnapshot.Host]) throws -> Int {
+        try database.write { db in
+            var added = 0
+            for backup in hosts {
+                guard try SavedHost.fetchOne(db, key: backup.id) == nil else { continue }
+                var draft = HostDraft()
+                draft.hostname = backup.hostname
+                draft.port = backup.port.map(String.init) ?? ""
+                draft.username = backup.username ?? ""
+                draft.name = backup.name
+                guard draft.isValid else { continue }
+                try backup.savedHost.insert(db)
+                try Self.replaceTags(of: backup.id, with: backup.tags, in: db)
+                added += 1
+            }
+            try Self.deleteUnusedTags(in: db)
+            return added
+        }
+    }
+
     // MARK: Tags
 
     private static func replaceTags(of hostId: String, with names: [String], in db: Database) throws {

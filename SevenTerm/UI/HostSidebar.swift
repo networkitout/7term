@@ -2,9 +2,10 @@ import SwiftUI
 import SevenTermCore
 
 /// Saved hosts, each listed once, with type-to-filter and a tag filter.
-/// Double-click or Return opens ssh; the row's SFTP button, the right-click
-/// menu and the Host menu open sftp or a file transfer app.
+/// Double-click or Return opens ssh; the row's SFTP button opens the file
+/// browser, and the right-click and Host menus also offer the sftp prompt.
 struct HostSidebar: View {
+    @Environment(\.chrome) private var chrome
     @Environment(HostDirectory.self) private var hosts
     @Environment(SessionStore.self) private var sessions
 
@@ -15,15 +16,16 @@ struct HostSidebar: View {
             HostRow(
                 entry: entry,
                 connect: { sessions.open(entry, kind: .ssh) },
-                openSFTP: { sessions.open(entry, kind: .sftp) }
+                openSFTP: { sessions.open(entry, kind: .files) }
             )
         }
         .scrollContentBackground(.hidden)
-        .background(Brand.panel)
+        .background(chrome.panel)
         .contextMenu(forSelectionType: String.self) { hostIDs in
             if let entry = hostIDs.first.flatMap(hosts.entry(id:)) {
                 Button("Connect with SSH") { sessions.open(entry, kind: .ssh) }
-                Button("Open SFTP") { sessions.open(entry, kind: .sftp) }
+                Button("Browse Files (SFTP)") { sessions.open(entry, kind: .files) }
+                Button("SFTP Prompt") { sessions.open(entry, kind: .sftp) }
                 ForEach(FileTransferApp.installed) { app in
                     Button("Open in \(app.name)") {
                         Task { await app.open(entry.host.target) }
@@ -114,6 +116,7 @@ struct HostSidebar: View {
                 VStack(spacing: 8) {
                     Button("New Host…") { hosts.editor = .new }
                     Button("Import from ssh_config…") { hosts.presentImport() }
+                    Button("Import from Spreadsheet…") { hosts.isSpreadsheetImportPresented = true }
                 }
             }
         } else if hosts.visibleEntries.isEmpty {
@@ -124,6 +127,7 @@ struct HostSidebar: View {
 }
 
 private struct HostRow: View {
+    @Environment(\.chrome) private var chrome
     let entry: HostEntry
     let connect: () -> Void
     let openSFTP: () -> Void
@@ -152,12 +156,12 @@ private struct HostRow: View {
                     .help("Connect with ssh (Return or double-click)")
                     .accessibilityLabel("Connect to \(entry.host.name) with ssh")
                 Button("SFTP", action: openSFTP)
-                    .help("Open an sftp session (⌥⌘↩)")
-                    .accessibilityLabel("Open sftp to \(entry.host.name)")
+                    .help("Browse files over SFTP (⌥⌘↩)")
+                    .accessibilityLabel("Browse files on \(entry.host.name)")
             }
             .buttonStyle(.borderless)
             .font(Brand.mono(10.5, weight: .bold))
-            .foregroundStyle(Brand.red)
+            .foregroundStyle(chrome.accent)
             .opacity(isHovering ? 1 : 0)
         }
         .contentShape(Rectangle())

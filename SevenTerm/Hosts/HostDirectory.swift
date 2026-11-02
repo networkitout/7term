@@ -39,9 +39,13 @@ final class HostDirectory {
     /// A host waiting for the delete confirmation.
     var pendingDelete: HostEntry?
     var isImportPresented = false
+    /// The spreadsheet (CSV or pasted cells) import sheet.
+    var isSpreadsheetImportPresented = false
     private(set) var importCandidates: [SSHConfigAlias] = []
 
     private let library: HostLibrary?
+    /// Called after the host list changes; the backup uses it.
+    @ObservationIgnored var onChange: (() -> Void)?
     private static let didOfferImportKey = "didOfferSSHConfigImport"
 
     init() {
@@ -86,12 +90,30 @@ final class HostDirectory {
             if let tagFilter, !allTags.contains(where: { $0.caseInsensitiveCompare(tagFilter) == .orderedSame }) {
                 self.tagFilter = nil
             }
+            onChange?()
         } catch {
             errorMessage = "Couldn't read saved hosts: \(error.localizedDescription)"
         }
     }
 
+    /// Saves the rows chosen in the spreadsheet import. Returns a summary
+    /// for the sheet, or throws.
+    func importSpreadsheet(_ candidates: [HostImportCandidate], updateExisting: Bool) throws -> (added: Int, updated: Int) {
+        guard let library else { throw CocoaError(.fileReadUnknown) }
+        let result = try library.importHosts(candidates, updateExisting: updateExisting)
+        reload()
+        return result
+    }
+
     // MARK: Editing
+
+    /// Adds backed-up hosts that aren't here yet. Returns how many were added.
+    func restore(_ backup: [BackupSnapshot.Host]) throws -> Int {
+        guard let library else { return 0 }
+        let added = try library.restore(backup)
+        reload()
+        return added
+    }
 
     /// Saves the draft. `password` replaces the stored Keychain password
     /// when given; nil keeps it. Switching away from password auth removes

@@ -19,6 +19,7 @@ struct SevenTermApp: App {
     @State private var appearance: Appearance
     @State private var sessions: SessionStore
     @State private var hosts: HostDirectory
+    @State private var backup: BackupManager
 
     init() {
         // Before anything reads settings or the host library.
@@ -26,7 +27,14 @@ struct SevenTermApp: App {
         let appearance = Appearance()
         _appearance = State(initialValue: appearance)
         _sessions = State(initialValue: SessionStore(appearance: appearance))
-        _hosts = State(initialValue: HostDirectory())
+        let hosts = HostDirectory()
+        _hosts = State(initialValue: hosts)
+
+        let backup = BackupManager(hosts: hosts, appearance: appearance)
+        _backup = State(initialValue: backup)
+        hosts.onChange = { [weak backup] in backup?.scheduleBackup() }
+        appearance.onSettingsChange = { [weak backup] in backup?.scheduleBackup() }
+        backup.scheduleBackup()
     }
 
     var body: some Scene {
@@ -39,6 +47,7 @@ struct SevenTermApp: App {
                 .onAppear {
                     appDelegate.store = sessions
                     appDelegate.appearance = appearance
+                    appearance.updateDockIcon()
                 }
         }
         // The wordmark replaces the plain window title, as in 6 Bits.
@@ -51,6 +60,9 @@ struct SevenTermApp: App {
                     .keyboardShortcut("t", modifiers: .command)
                 Divider()
                 Button("Import from ~/.ssh/config…") { hosts.presentImport() }
+                Button("Import from Spreadsheet…") { hosts.isSpreadsheetImportPresented = true }
+                    .keyboardShortcut("i", modifiers: [.command, .shift])
+                Button("Restore from Backup…") { backup.chooseAndRestore() }
             }
             // Replaces the default Close item so ⌘W closes a tab, not the window.
             CommandGroup(replacing: .saveItem) {
@@ -83,10 +95,14 @@ struct SevenTermApp: App {
                 }
                 .keyboardShortcut(.return, modifiers: .command)
                 .disabled(hosts.selectedEntry == nil)
-                Button("Open SFTP") {
-                    if let entry = hosts.selectedEntry { sessions.open(entry, kind: .sftp) }
+                Button("Browse Files (SFTP)") {
+                    if let entry = hosts.selectedEntry { sessions.open(entry, kind: .files) }
                 }
                 .keyboardShortcut(.return, modifiers: [.command, .option])
+                .disabled(hosts.selectedEntry == nil)
+                Button("SFTP Prompt") {
+                    if let entry = hosts.selectedEntry { sessions.open(entry, kind: .sftp) }
+                }
                 .disabled(hosts.selectedEntry == nil)
                 ForEach(FileTransferApp.installed) { app in
                     Button("Open in \(app.name)") {
@@ -138,8 +154,16 @@ struct SevenTermApp: App {
         }
 
         Settings {
-            AppearanceSettings()
-                .environment(appearance)
+            TabView {
+                AppearanceSettings()
+                    .tabItem { Label("Appearance", systemImage: "paintpalette") }
+                BackupSettings()
+                    .tabItem { Label("Backup", systemImage: "icloud") }
+            }
+            .environment(appearance)
+            .environment(backup)
+            .environment(\.chrome, Chrome.forPalette(id: appearance.paletteID))
+            .tint(Chrome.forPalette(id: appearance.paletteID).accent)
         }
     }
 }

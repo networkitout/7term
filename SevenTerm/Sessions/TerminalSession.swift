@@ -19,9 +19,10 @@ final class TerminalSession: Identifiable {
         case failed(String)
     }
 
-    /// What runs in the tab. Both use the system OpenSSH tools.
+    /// What runs in the tab. All use the system OpenSSH tools: a shell, the
+    /// sftp> prompt, or the file browser (ssh's sftp subsystem).
     enum Kind: String, Equatable {
-        case ssh, sftp
+        case ssh, sftp, files
 
         var executable: String { "/usr/bin/\(rawValue)" }
 
@@ -34,6 +35,7 @@ final class TerminalSession: Identifiable {
             switch self {
             case .ssh: return timeout + target.sshArguments
             case .sftp: return timeout + target.sftpArguments
+            case .files: return timeout + FileBrowser.sshArguments(for: target)
             }
         }
     }
@@ -55,6 +57,8 @@ final class TerminalSession: Identifiable {
     private(set) var lastLogURL: URL?
 
     @ObservationIgnored let terminalView: TerminalView
+    /// Set for a file browser tab, which shows this instead of the terminal.
+    let files: FileBrowser?
     @ObservationIgnored private var process: LocalProcess?
     @ObservationIgnored private var bridge: ProcessBridge?
     @ObservationIgnored private var logWriter: SessionLogWriter?
@@ -71,7 +75,11 @@ final class TerminalSession: Identifiable {
         } else {
             base = target.displayName
         }
-        return kind == .sftp ? base + " · sftp" : base
+        switch kind {
+        case .ssh: return base
+        case .sftp: return base + " · sftp"
+        case .files: return base + " · files"
+        }
     }
 
     init(
@@ -88,12 +96,22 @@ final class TerminalSession: Identifiable {
         self.name = name
         self.logByDefault = logByDefault
         terminalView = TerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 500))
+        files = kind == .files ? FileBrowser(target: target, keychainHost: keychainHost) : nil
         appearance.apply(to: terminalView)
         terminalView.terminalDelegate = self
     }
 
     func start() {
         guard state != .running else { return }
+
+        if let files {
+            state = .running
+            files.onEnded = { [weak self] message in self?.filesEnded(message) }
+            files.log = { [weak self] line in self?.appendLogLine(line) }
+            if logByDefault { startLogging() }
+            Task { await files.connect() }
+            return
+        }
 
         // A fresh bridge per launch, so a late callback from an old process
         // can never change the state of a new one.
@@ -125,6 +143,10 @@ final class TerminalSession: Identifiable {
 
     func restart() {
         guard state != .running else { return }
+        if files != nil {
+            start()
+            return
+        }
         terminalView.feed(text: "\r\n\u{1b}[2m[reconnecting to \(target.displayName)]\u{1b}[0m\r\n")
         start()
     }
@@ -133,7 +155,36 @@ final class TerminalSession: Identifiable {
     func stop() {
         stopLogging()
         guard state == .running else { return }
+        if let files {
+            files.disconnect()
+            state = .ended(exitCode: nil)
+            return
+        }
         process?.terminate()
+    }
+
+    /// The file browser's connection closed or failed.
+    private func filesEnded(_ message: String?) {
+        stopLogging()
+        if let message {
+            state = .failed(message)
+        } else {
+            state = .ended(exitCode: nil)
+        }
+    }
+
+    /// Adds one line to the log, for tabs whose record isn't terminal output
+    /// (the file browser logs each transfer and its SHA-256).
+    private func appendLogLine(_ line: String) {
+        guard let logWriter else { return }
+        do {
+            try logWriter.append(Array((line + "\r\n").utf8))
+        } catch {
+            self.logWriter = nil
+            isLogging = false
+            _ = try? logWriter.close()
+            note("logging stopped: \(error.localizedDescription)", isError: true)
+        }
     }
 
     // MARK: Logging
@@ -180,6 +231,10 @@ final class TerminalSession: Identifiable {
     /// A dim status line in the terminal. It goes to the screen only, never
     /// into the log, because it doesn't pass through `received`.
     private func note(_ message: String, isError: Bool = false) {
+        if let files {
+            files.status = message
+            return
+        }
         let color = isError ? "\u{1b}[31m" : "\u{1b}[2m"
         terminalView.feed(text: "\r\n\(color)[\(message)]\u{1b}[0m\r\n")
     }

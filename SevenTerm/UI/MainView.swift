@@ -6,9 +6,11 @@ import SevenTermCore
 struct MainView: View {
     @Environment(SessionStore.self) private var sessions
     @Environment(HostDirectory.self) private var hosts
+    @Environment(Appearance.self) private var appearance
 
     var body: some View {
         @Bindable var hosts = hosts
+        let chrome = Chrome.forPalette(id: appearance.paletteID)
 
         NavigationSplitView {
             HostSidebar()
@@ -29,9 +31,9 @@ struct MainView: View {
                 }
             }
         }
-        .toolbarBackground(Brand.background, for: .windowToolbar)
-        .background(Brand.background)
-        .tint(Brand.red)
+        .toolbarBackground(chrome.background, for: .windowToolbar)
+        .background(chrome.background)
+        .tint(chrome.accent)
         .preferredColorScheme(.dark)
         .sheet(isPresented: $hosts.isImportPresented) {
             ImportSheet(
@@ -41,7 +43,12 @@ struct MainView: View {
                 onSkip: { hosts.skipImport() }
             )
         }
+        .sheet(isPresented: $hosts.isSpreadsheetImportPresented) {
+            SpreadsheetImportSheet()
+        }
         .task { hosts.offerImportIfFirstRun() }
+        // Outermost, so every view and sheet in the window gets it.
+        .environment(\.chrome, chrome)
     }
 }
 
@@ -60,7 +67,10 @@ private struct SessionArea: View {
             }
             ZStack {
                 appearance.palette.background.swiftUIColor
-                if let session = store.selected {
+                if let session = store.selected, let files = session.files {
+                    FileBrowserView(browser: files)
+                        .id(session.id)
+                } else if let session = store.selected {
                     TerminalHost(session: session)
                         .id(session.id)
                 } else {

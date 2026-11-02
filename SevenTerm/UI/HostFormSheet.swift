@@ -4,6 +4,7 @@ import SevenTermCore
 
 /// Add or edit a saved host.
 struct HostFormSheet: View {
+    @Environment(\.chrome) private var chrome
     let entry: HostEntry?
     /// Saves the draft and a new Keychain password (nil keeps the stored
     /// one), and returns an error message, or nil on success.
@@ -27,49 +28,59 @@ struct HostFormSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Form {
-                Section {
-                    field("Name", text: $draft.name, prompt: "Defaults to the host", error: .name)
-                    field("Host", text: $draft.hostname, prompt: "IP, DNS name, or ssh_config alias", error: .hostname)
-                    field("Port", text: $draft.port, prompt: "22, or from ssh_config", error: .port)
-                    field("User", text: $draft.username, prompt: "From ssh_config, or your Mac user", error: .username)
-                    field("Tags", text: $draft.tags, prompt: "proxmox, lab", error: .tags)
-                    Toggle("Log every session to this host", isOn: $draft.logByDefault)
-                } header: {
-                    Text(entry == nil ? "New Host" : "Edit Host")
-                } footer: {
-                    Text(commandPreview)
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
+            // Two columns, so the form fits a short window without scrolling:
+            // where the host is on the left, how to sign in on the right.
+            HStack(alignment: .top, spacing: 0) {
+                Form {
+                    Section {
+                        field("Name", text: $draft.name, prompt: "Defaults to the host", error: .name)
+                        field("Host", text: $draft.hostname, prompt: "IP, DNS name, or alias", error: .hostname)
+                        field("Port", text: $draft.port, prompt: "22, or from ssh_config", error: .port)
+                        field("User", text: $draft.username, prompt: "From ssh_config", error: .username)
+                        field("Tags", text: $draft.tags, prompt: "proxmox, lab", error: .tags)
+                        Toggle("Log every session", isOn: $draft.logByDefault)
+                    } header: {
+                        Text(entry == nil ? "New Host" : "Edit Host")
+                    } footer: {
+                        Text(commandPreview)
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
+                .formStyle(.grouped)
+                .frame(width: 390)
 
-                Section("Authentication") {
-                    Picker("Sign in with", selection: $draft.authMethod) {
-                        Text("Agent / ssh_config").tag(AuthMethod.automatic)
-                        Text("Key file").tag(AuthMethod.keyFile)
-                        Text("Password in Keychain").tag(AuthMethod.password)
-                    }
-                    switch draft.authMethod {
-                    case .automatic:
-                        note("ssh tries your agent (1Password, Secretive, ssh-agent) and ~/.ssh/config, then asks in the terminal.")
-                    case .keyFile:
-                        HStack(alignment: .firstTextBaseline) {
-                            field("Key", text: $draft.identityFile, prompt: "~/.ssh/id_ed25519", error: .identityFile)
-                            Button("Choose…", action: chooseKey)
+                Form {
+                    Section("Authentication") {
+                        Picker("Sign in with", selection: $draft.authMethod) {
+                            Text("Agent / ssh_config").tag(AuthMethod.automatic)
+                            Text("Key file").tag(AuthMethod.keyFile)
+                            Text("Password in Keychain").tag(AuthMethod.password)
                         }
-                        note("Only this key is offered (IdentitiesOnly). A passphrase, if any, is asked for in a dialog.")
-                    case .password:
-                        SecureField(
-                            "Password",
-                            text: $password,
-                            prompt: Text(hasStoredPassword ? "Stored in Keychain. Type to replace it." : "Saved to your login Keychain")
-                        )
-                        note("Touch ID is required each time 7 Term uses it. It's never written to the host list, backups or logs, and never typed into the terminal.")
+                        switch draft.authMethod {
+                        case .automatic:
+                            note("ssh tries your agent (1Password, Secretive, ssh-agent) and ~/.ssh/config, then asks in the terminal.")
+                        case .keyFile:
+                            HStack(alignment: .firstTextBaseline) {
+                                field("Key", text: $draft.identityFile, prompt: "~/.ssh/id_ed25519", error: .identityFile)
+                                Button("Choose…", action: chooseKey)
+                            }
+                            note("Only this key is offered (IdentitiesOnly). A passphrase, if any, is asked for in a dialog.")
+                        case .password:
+                            SecureField(
+                                "Password",
+                                text: $password,
+                                prompt: Text(hasStoredPassword ? "Stored. Type to replace." : "Saved to your Keychain")
+                            )
+                            note("Touch ID is required each time 7 Term uses it. Never written to the host list, backups or logs, and never typed into the terminal.")
+                        }
                     }
                 }
+                .formStyle(.grouped)
+                .frame(width: 340)
             }
-            .formStyle(.grouped)
 
             if let saveError {
                 Text(saveError)
@@ -98,11 +109,11 @@ struct HostFormSheet: View {
                     .keyboardShortcut(.cancelAction)
                 Button(entry == nil ? "Add Host" : "Save", action: save)
                     .keyboardShortcut(.defaultAction)
-                    .tint(Brand.red)
+                    .tint(chrome.accent)
             }
             .padding(20)
         }
-        .frame(width: 500)
+        .frame(width: 730)
         .onChange(of: draft.hostname) { probeMessage = nil }
         .onChange(of: draft.port) { probeMessage = nil }
     }

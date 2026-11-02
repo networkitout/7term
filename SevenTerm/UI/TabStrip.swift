@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct TabStrip: View {
+    @Environment(\.chrome) private var chrome
     @Environment(SessionStore.self) private var store
 
     var body: some View {
@@ -11,7 +12,7 @@ struct TabStrip: View {
                     .padding(.horizontal, 8)
             }
         }
-        .background(Brand.panel)
+        .background(chrome.panel)
     }
 
     private var tabs: some View {
@@ -61,18 +62,20 @@ private struct LoggingButton: View {
 /// Logging is shown with a shape and a word, never color alone,
 /// because red is also 7 Term's accent.
 private struct RecordingBadge: View {
+    @Environment(\.chrome) private var chrome
     var body: some View {
         Text("REC")
             .font(.system(size: 9, weight: .heavy, design: .rounded))
             .foregroundStyle(.white)
             .padding(.horizontal, 4)
             .padding(.vertical, 1)
-            .background(RoundedRectangle(cornerRadius: 1.5).fill(Brand.red))
+            .background(RoundedRectangle(cornerRadius: 1.5).fill(chrome.accent))
             .accessibilityHidden(true)
     }
 }
 
 private struct TabButton: View {
+    @Environment(\.chrome) private var chrome
     let session: TerminalSession
     let isSelected: Bool
     let select: () -> Void
@@ -110,7 +113,7 @@ private struct TabButton: View {
         )
         .overlay(alignment: .bottom) {
             if isSelected {
-                Rectangle().fill(Brand.red).frame(height: 2)
+                Rectangle().fill(chrome.accent).frame(height: 2)
             }
         }
         .contentShape(Rectangle())
