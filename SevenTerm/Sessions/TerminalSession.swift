@@ -22,7 +22,7 @@ final class TerminalSession: Identifiable {
     /// What runs in the tab. All use the system OpenSSH tools: a shell, the
     /// sftp> prompt, or the file browser (ssh's sftp subsystem).
     enum Kind: String, Equatable {
-        case ssh, sftp, files
+        case ssh, sftp, files, serial
 
         var executable: String { "/usr/bin/\(rawValue)" }
 
@@ -36,6 +36,7 @@ final class TerminalSession: Identifiable {
             case .ssh: return timeout + target.sshArguments
             case .sftp: return timeout + target.sftpArguments
             case .files: return timeout + FileBrowser.sshArguments(for: target)
+            case .serial: return []
             }
         }
     }
@@ -59,6 +60,9 @@ final class TerminalSession: Identifiable {
     @ObservationIgnored let terminalView: TerminalView
     /// Set for a file browser tab, which shows this instead of the terminal.
     let files: FileBrowser?
+    /// Set for a serial console tab: the port and its settings.
+    let serial: (path: String, settings: SerialSettings)?
+    @ObservationIgnored private var serialPort: SerialPort?
     @ObservationIgnored private var process: LocalProcess?
     @ObservationIgnored private var bridge: ProcessBridge?
     @ObservationIgnored private var logWriter: SessionLogWriter?
@@ -79,6 +83,7 @@ final class TerminalSession: Identifiable {
         case .ssh: return base
         case .sftp: return base + " · sftp"
         case .files: return base + " · files"
+        case .serial: return name == nil ? base + " · \(serial?.settings.baudRate ?? 9600)" : base
         }
     }
 
@@ -88,8 +93,10 @@ final class TerminalSession: Identifiable {
         name: String? = nil,
         logByDefault: Bool = false,
         keychainHost: (id: String, name: String)? = nil,
+        serial: (path: String, settings: SerialSettings)? = nil,
         appearance: Appearance
     ) {
+        self.serial = serial
         self.kind = kind
         self.target = target
         self.keychainHost = keychainHost
@@ -110,6 +117,11 @@ final class TerminalSession: Identifiable {
             files.log = { [weak self] line in self?.appendLogLine(line) }
             if logByDefault { startLogging() }
             Task { await files.connect() }
+            return
+        }
+
+        if let serial {
+            openSerial(serial.path, serial.settings)
             return
         }
 
@@ -160,7 +172,68 @@ final class TerminalSession: Identifiable {
             state = .ended(exitCode: nil)
             return
         }
+        if let serialPort {
+            self.serialPort = nil
+            serialPort.close()
+            state = .ended(exitCode: nil)
+            note("closed \(serialPort.path)")
+            return
+        }
         process?.terminate()
+    }
+
+    // MARK: Serial
+
+    private func openSerial(_ path: String, _ settings: SerialSettings) {
+        do {
+            let port = try SerialPort(path: path, settings: settings)
+            serialPort = port
+            state = .running
+            note("opened \(path) at \(settings.summary) · Session ▸ Send Break for ROMMON")
+            port.startReading(
+                on: .main,
+                onData: { [weak self, weak port] bytes in
+                    MainActor.assumeIsolated {
+                        guard let self, let port, self.serialPort === port else { return }
+                        self.consume(bytes[...])
+                    }
+                },
+                onEnd: { [weak self, weak port] error in
+                    MainActor.assumeIsolated {
+                        guard let self, let port, self.serialPort === port else { return }
+                        self.serialEnded(error)
+                    }
+                }
+            )
+            if logByDefault { startLogging() }
+        } catch {
+            let message = error.localizedDescription
+            state = .failed(message)
+            note(message, isError: true)
+        }
+    }
+
+    private func serialEnded(_ error: SerialError?) {
+        stopLogging()
+        serialPort?.close()
+        serialPort = nil
+        state = .ended(exitCode: nil)
+        let reason = error?.localizedDescription ?? "port closed"
+        terminalView.feed(text: "\r\n\u{1b}[2m[\(reason) · ⇧⌘R to reopen]\u{1b}[0m\r\n")
+    }
+
+    var canSendBreak: Bool { serialPort != nil && state == .running }
+
+    /// Holds the line in break for 300 ms: ROMMON, password recovery.
+    func sendBreak() {
+        guard let serialPort else { return }
+        do {
+            try serialPort.sendBreak()
+            note("break sent")
+            appendLogLine("[break sent \(Date().formatted(.iso8601))]")
+        } catch {
+            note(error.localizedDescription, isError: true)
+        }
     }
 
     /// The file browser's connection closed or failed.
@@ -243,6 +316,11 @@ final class TerminalSession: Identifiable {
 
     fileprivate func received(_ bytes: ArraySlice<UInt8>, from source: ProcessBridge) {
         guard source === bridge else { return }
+        consume(bytes)
+    }
+
+    /// Output from ssh or a serial port: to the log while logging, then to the screen.
+    private func consume(_ bytes: ArraySlice<UInt8>) {
         if let logWriter {
             do {
                 try logWriter.append(bytes)
@@ -305,7 +383,11 @@ extension TerminalSession: TerminalViewDelegate {
     /// Keystrokes go straight to ssh and are never stored.
     func send(source: TerminalView, data: ArraySlice<UInt8>) {
         guard state == .running else { return }
-        process?.send(data: data)
+        if let serialPort {
+            serialPort.write(Array(data))
+        } else {
+            process?.send(data: data)
+        }
     }
 
     func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {}

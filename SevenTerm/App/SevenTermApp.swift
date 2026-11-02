@@ -20,6 +20,7 @@ struct SevenTermApp: App {
     @State private var sessions: SessionStore
     @State private var hosts: HostDirectory
     @State private var backup: BackupManager
+    @State private var serialPorts = SerialPortList()
 
     init() {
         // Before anything reads settings or the host library.
@@ -40,6 +41,7 @@ struct SevenTermApp: App {
     var body: some Scene {
         Window("7 Term", id: "main") {
             MainView()
+                .environment(serialPorts)
                 .environment(sessions)
                 .environment(hosts)
                 .environment(appearance)
@@ -160,6 +162,11 @@ struct SevenTermApp: App {
                 .keyboardShortcut("l", modifiers: [.command, .shift])
                 .disabled(!sessions.canToggleLoggingSelected)
                 Button("Show Log in Finder") { LogLocation.reveal(sessions.selected?.lastLogURL) }
+                Divider()
+                Button("Send Break") { sessions.sendBreakSelected() }
+                    .keyboardShortcut("b", modifiers: .command)
+                    .disabled(!sessions.canSendBreakSelected)
+                    .help("Serial consoles: hold the line in break for 300 ms (ROMMON, password recovery)")
                 Divider()
                 Button("Show Next Tab") { sessions.selectNext() }
                     .keyboardShortcut("]", modifiers: [.command, .shift])

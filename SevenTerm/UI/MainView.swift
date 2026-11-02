@@ -79,7 +79,10 @@ private struct SessionArea: View {
             }
         }
         .sheet(isPresented: $store.isQuickConnectPresented) {
-            QuickConnectSheet { target, kind in store.open(target, kind: kind) }
+            QuickConnectSheet(
+                connect: { target, kind in store.open(target, kind: kind) },
+                openSerial: { path, settings in store.openSerial(path: path, settings: settings) }
+            )
         }
     }
 }

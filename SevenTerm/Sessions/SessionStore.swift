@@ -86,6 +86,24 @@ final class SessionStore {
         session.start()
     }
 
+    /// Opens a serial console tab. `name` is a saved host's name.
+    func openSerial(path: String, settings: SerialSettings, name: String? = nil, logByDefault: Bool = false) {
+        let shortName = (path as NSString).lastPathComponent.replacingOccurrences(of: "cu.", with: "")
+        let session = TerminalSession(
+            kind: .serial, target: SSHTarget(host: shortName), name: name,
+            logByDefault: logByDefault, serial: (path, settings), appearance: appearance
+        )
+        sessions.append(session)
+        selectedID = session.id
+        session.start()
+    }
+
+    var canSendBreakSelected: Bool { selected?.canSendBreak ?? false }
+
+    func sendBreakSelected() {
+        selected?.sendBreak()
+    }
+
     func close(_ session: TerminalSession) {
         session.stop()
         guard let index = sessions.firstIndex(where: { $0.id == session.id }) else { return }
