@@ -50,6 +50,21 @@ final class SessionStore {
         )
     }
 
+    /// Search works in terminal tabs; the file browser has no scrollback.
+    var canFind: Bool {
+        guard let selected else { return false }
+        return selected.files == nil
+    }
+
+    /// Sends a find action (show the bar, next, previous) to the current
+    /// terminal. SwiftTerm draws the find bar and does the searching.
+    func find(_ action: NSTextFinder.Action) {
+        guard let selected, selected.files == nil else { return }
+        let item = NSMenuItem()
+        item.tag = action.rawValue
+        selected.terminalView.performTextFinderAction(item)
+    }
+
     func toggleLoggingSelected() {
         selected?.toggleLogging()
     }

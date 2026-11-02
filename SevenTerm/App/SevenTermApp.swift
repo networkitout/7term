@@ -64,6 +64,20 @@ struct SevenTermApp: App {
                     .keyboardShortcut("i", modifiers: [.command, .shift])
                 Button("Restore from Backup…") { backup.chooseAndRestore() }
             }
+            // Edit ▸ Find: SwiftTerm's find bar over the current terminal tab.
+            CommandGroup(after: .pasteboard) {
+                Divider()
+                Menu("Find") {
+                    Button("Find…") { sessions.find(.showFindInterface) }
+                        .keyboardShortcut("f", modifiers: .command)
+                    Button("Find Next") { sessions.find(.nextMatch) }
+                        .keyboardShortcut("g", modifiers: .command)
+                    Button("Find Previous") { sessions.find(.previousMatch) }
+                        .keyboardShortcut("g", modifiers: [.command, .shift])
+                    Button("Use Selection for Find") { sessions.find(.setSearchString) }
+                }
+                .disabled(!sessions.canFind)
+            }
             // Replaces the default Close item so ⌘W closes a tab, not the window.
             CommandGroup(replacing: .saveItem) {
                 Button("Close Tab") { sessions.closeSelectedOrWindow() }

@@ -6,17 +6,42 @@ A small native macOS SSH and SFTP client for a home lab: a list of hosts, one cl
 
 ## Status
 
-Milestones 1 to 3 of 7 are built and tested: tabs, quick connect, a saved host list with tags and a one-time import from `~/.ssh/config`, and per-tab logging. Milestone 4 adds themes and global text size; milestone 5 adds SFTP. Saved hosts live in `~/Library/Application Support/7 Term/hosts.sqlite`.
+Milestones 1 to 9 are built and in use. Saved hosts live in `~/Library/Application Support/7 Term/hosts.sqlite`.
 
 | # | Milestone | State |
 |---|---|---|
-| 1 | Terminal in a window, with tabs | Committed |
-| 2 | Saved host list, tags, filter, import from `~/.ssh/config` | Committed |
-| 3 | Per-tab logging to `~/Documents/7 Term/Logs/`, SHA-256 on close | Tested on a live host |
-| 4 | Themes (7 Term, 6 Bits, Night Red, Dark, Light, .itermcolors import), global ⌘+ / ⌘- / ⌘0 | Committed |
-| 5 | SFTP from the same host entry, hand-off to Transmit or ForkLift | Committed |
-| 6 | Credentials: agent, key file, Keychain password behind Touch ID | Written, needs a build |
-| 7 | JSON backup of hosts and settings to iCloud Drive | |
+| 1 | Terminal in a window, with tabs | Done |
+| 2 | Saved host list, tags, filter, import from `~/.ssh/config` | Done |
+| 3 | Per-tab logging to `~/Documents/7 Term/Logs/`, SHA-256 on close | Done |
+| 4 | Themes (7 Term, 6 Bits, Night Red, Dark, Light, .itermcolors import), global ⌘+ / ⌘- / ⌘0 | Done |
+| 5 | SFTP prompt from the same host entry, hand-off to Transmit or ForkLift | Done |
+| 6 | Credentials: agent, key file, Keychain password behind Touch ID | Done |
+| 7 | JSON backup of hosts and settings to iCloud Drive | Done |
+| 8 | File browser: local and remote panes, drag and drop, transfer queue with SHA-256 | Done |
+| 9 | Import hosts from a spreadsheet (pasted cells or CSV) | Done |
+
+## Plan: 1.0 for other people
+
+In this order. Milestone 10 is built; the rest are planned.
+
+| # | Milestone | Notes |
+|---|---|---|
+| 10 | Find in the terminal (⌘F, ⌘G, ⇧⌘G) | Uses SwiftTerm's built-in find bar; Edit ▸ Find |
+| 11 | Serial console | Native termios, no `screen`. List `/dev/cu.*` ports; saved serial entries with baud, data bits, parity, stop bits, flow control; Send Break for ROMMON and password recovery; logging and tabs as for ssh |
+| 12 | Import from other tools | RoyalTSX (.rtsz/.rtsx, zipped XML), SecureCRT (session .ini files, folders become tags), PuTTY/KiTTY (.reg export), MobaXterm (.mxtsessions). Reuse the spreadsheet import's preview, dedupe and "passwords never read" rules |
+| 13 | Release | MIT license; Developer ID signing, notarization (notarytool with a Keychain profile), signed DMG on GitHub Releases, Sparkle updates; Homebrew cask later. Not the Mac App Store: its sandbox can't run /usr/bin/ssh with your ssh_config |
+
+Decided against: keepalives on by default (left to ssh_config), RDP/VNC, sync between Macs, Mosh, a built-in key generator.
+
+Also worth considering: port forwards saved with a host, a colour per host (prod vs lab), Option as Meta.
+
+## Backlog
+
+Nice to have, not planned:
+
+- Resume interrupted transfers: keep the partial file when the connection drops, check the source hasn't changed (size and modified time), continue from the partial size and re-hash the part already copied. Retry button on failed transfers.
+- Drag from the remote pane straight into Finder (file promises).
+- Drop onto a folder row instead of into the folder that's open.
 
 ## Build
 
@@ -96,11 +121,13 @@ Packages/SevenTermCore       Parsing, host storage (GRDB), ssh_config scanning, 
 | ⌘N | New saved host |
 | ⌘T | Quick connect |
 | Return, double-click or ⌘↩ | Connect to the selected host with ssh |
-| ⌥⌘↩ | Open an sftp tab to the selected host |
+| ⌥⌘↩ | Browse files on the selected host (SFTP) |
+| ⇧⌘I | Import hosts from a spreadsheet |
 | ⌘E / ⌘D / ⌘⌫ | Edit, duplicate or delete the selected host |
 | ⌘W | Close tab (closes the window when no tabs are open) |
 | ⇧⌘] / ⇧⌘[ | Next / previous tab |
 | ⇧⌘R | Reconnect an ended session |
 | ⇧⌘L | Start or stop logging the current tab |
+| ⌘F / ⌘G / ⇧⌘G | Find, find next, find previous in the terminal |
 | ⌘+ (or ⌘=) / ⌘- / ⌘0 | Bigger, smaller, default text size in every tab |
 | ⌘, | Settings: theme, font, size |
