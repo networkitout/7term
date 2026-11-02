@@ -11,7 +11,8 @@ let package = Package(
         .library(name: "SevenTermCore", targets: ["SevenTermCore"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/groue/GRDB.swift", from: "7.12.0"),
+        // Exact, so builds are reproducible. Package.resolved is committed.
+        .package(url: "https://github.com/groue/GRDB.swift", exact: "7.12.0"),
     ],
     targets: [
         .target(

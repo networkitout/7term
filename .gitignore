@@ -11,4 +11,4 @@ build/
 # Swift Package Manager
 .build/
 .swiftpm/
-Packages/*/Package.resolved
+# Package.resolved files are committed: they pin exact dependency versions.

@@ -18,9 +18,13 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
 
 packages:
+  # Exact versions: a release build is reproducible from its commit.
+  # Package.resolved at the repo root pins SwiftTerm's own dependencies too;
+  # the release script copies it into the generated project. To update,
+  # change the version here, build once, and commit the new Package.resolved.
   SwiftTerm:
     url: https://github.com/migueldeicaza/SwiftTerm
-    from: 1.99.2
+    exactVersion: 1.99.2
   SevenTermCore:
     path: Packages/SevenTermCore
 
