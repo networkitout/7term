@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7 Term Help</title><style>
+:root {
+  --accent: #FF3434; --bg: #0D0909; --panel: #150F0F; --line: rgba(255,255,255,.08);
+  --text: #E8E2E2; --dim: #9A9090;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.6 -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
+.mono, h1, h2, h3, nav, code, th { font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+header { display: flex; align-items: center; gap: 14px; padding: 22px 28px 18px;
+  border-bottom: 1px solid var(--line); background: var(--panel); }
+header .glyph { display: grid; grid-template-columns: repeat(5, 4px); gap: 2px; }
+header .glyph i { width: 4px; height: 4px; background: transparent; }
+header .glyph i.on { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
+header h1 { margin: 0; font-size: 20px; font-weight: 700; color: var(--accent); letter-spacing: .02em; }
+header p { margin: 0; color: var(--dim); font-size: 12px; }
+.wrap { display: grid; grid-template-columns: 210px 1fr; min-height: calc(100vh - 80px); }
+nav { position: sticky; top: 0; align-self: start; padding: 18px 0 18px 20px; font-size: 12px; }
+nav ul { list-style: none; margin: 0; padding: 0; }
+nav a { display: block; padding: 5px 10px; color: var(--dim); text-decoration: none;
+  border-left: 2px solid transparent; }
+nav a:hover, nav a.active { color: var(--accent); border-left-color: var(--accent); }
+main { padding: 8px 40px 60px 28px; max-width: 820px; }
+h2 { margin: 34px 0 10px; font-size: 15px; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--accent); border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h2::before { content: "> "; opacity: .7; }
+h3 { margin: 22px 0 6px; font-size: 13px; color: var(--text); }
+a { color: var(--accent); }
+strong { color: #fff; }
+code { background: var(--panel); border: 1px solid var(--line); padding: 1px 5px; border-radius: 2px;
+  font-size: 12px; color: var(--accent); }
+table { border-collapse: collapse; width: 100%; margin: 10px 0 16px; font-size: 13px; }
+th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--dim); font-weight: 600; }
+th, td { padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td:first-child { white-space: nowrap; }
+tr:hover td { background: var(--panel); }
+ul, ol { padding-left: 22px; } li { margin: 3px 0; }
+@media (max-width: 680px) { .wrap { grid-template-columns: 1fr; } nav { display: none; } main { padding: 8px 20px 40px; } }
+</style></head>
+<body>
+<header><div class="glyph" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i></div>
+<div><h1 aria-label="7 Term Help">Term Help</h1><p class="mono">ssh · sftp · logs, the quick way</p></div></header>
+<div class="wrap"><nav aria-label="Contents"><ul>
+<li><a href="#getting-started">Getting started</a></li>
+<li><a href="#saved-hosts">Saved hosts</a></li>
+<li><a href="#connecting">Connecting</a></li>
+<li><a href="#signing-in">Signing in</a></li>
+<li><a href="#copying-files">Copying files</a></li>
+<li><a href="#logging-sessions">Logging sessions</a></li>
+<li><a href="#finding-text">Finding text</a></li>
+<li><a href="#appearance">Appearance</a></li>
+<li><a href="#backup-and-restore">Backup and restore</a></li>
+<li><a href="#keyboard-shortcuts">Keyboard shortcuts</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+</ul></nav><main><p>7 Term is a small Mac app for connecting to the machines you manage: a list of saved hosts, one click to open a terminal or a file browser, tabs, and logging you switch on when you need a record.</p>
+<p>It uses the Mac's own OpenSSH (<code>/usr/bin/ssh</code>). Anything you've set up for ssh already works: <code>~/.ssh/config</code>, keys, agents such as 1Password or Secretive, ProxyJump, and <code>known_hosts</code>.</p>
+<h2 id="getting-started">Getting started</h2>
+<p>The first time 7 Term opens, it offers to import the hosts in your <code>~/.ssh/config</code>. Choose the ones you want, optionally give them a tag, or skip. You can run the import again later from <strong>File ▸ Import from ~/.ssh/config…</strong>.</p>
+<p>The window has two parts: your saved hosts on the left, and tabs on the right. With no tabs open, the right side shows <strong>Quick Connect…</strong>.</p>
+<h2 id="saved-hosts">Saved hosts</h2>
+<h3 id="adding-and-editing">Adding and editing</h3>
+<ul>
+<li><strong>New host:</strong> ⌘N, or the <strong>+</strong> button above the list.</li>
+<li><strong>Edit:</strong> click the <strong>gear</strong> at the end of a host's row, select it and press ⌘E, or right-click ▸ <strong>Edit…</strong>.</li>
+</ul>
+<p>The host form has two columns:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What to enter</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td>What the list shows. Defaults to the host.</td>
+</tr>
+<tr>
+<td>Host</td>
+<td>An IP address, a DNS name, or an alias from <code>~/.ssh/config</code>.</td>
+</tr>
+<tr>
+<td>Port</td>
+<td>Leave empty for 22, or whatever your ssh_config says.</td>
+</tr>
+<tr>
+<td>User</td>
+<td>Leave empty to use your ssh_config or your Mac username.</td>
+</tr>
+<tr>
+<td>Tags</td>
+<td>Comma-separated, for example <code>proxmox, lab</code>.</td>
+</tr>
+<tr>
+<td>Log every session</td>
+<td>Starts logging automatically each time this host opens.</td>
+</tr>
+<tr>
+<td>Sign in with</td>
+<td>See <a href="#signing-in">Signing in</a>.</td>
+</tr>
+</tbody>
+</table>
+<p>The line under the left column shows the exact ssh command 7 Term will run. <strong>Test Reachability</strong> checks that the port accepts a connection without logging in.</p>
+<h3 id="finding-hosts">Finding hosts</h3>
+<ul>
+<li>Type in <strong>Filter hosts</strong> to search names, addresses, users and tags.</li>
+<li>The menu at the bottom of the list shows only hosts with one tag.</li>
+<li>Each host appears once, whatever its tags. Its first three tags show under its name.</li>
+</ul>
+<h3 id="other-actions-right-click-a-host">Other actions (right-click a host)</h3>
+<p><strong>Duplicate</strong>, <strong>Copy Hostname</strong>, and <strong>Delete…</strong>. Deleting removes the host from 7 Term only. Your <code>~/.ssh/config</code> and any open tabs aren't touched, and its stored password is removed from the Keychain.</p>
+<h3 id="importing-many-hosts-at-once">Importing many hosts at once</h3>
+<p><strong>File ▸ Import from Spreadsheet…</strong> (⇧⌘I):</p>
+<ol>
+<li>In Excel or Numbers, select the cells (including a header row if you have one) and copy them. Then click <strong>Paste Rows</strong>. Or click <strong>Open CSV…</strong>, or drop a CSV file onto the sheet.</li>
+<li>Check the column guesses. Each column has a menu (Name, Host, Port, User, Tags, Key file, Ignore). A header row such as <code>Name, IP, Port, User, Tags</code> is matched automatically.</li>
+<li>Check the rows: <strong>+</strong> is new, the circular arrows mean already saved, and <strong>✕</strong> shows why a row can't be imported.</li>
+<li>Optionally add a tag to every host, and choose whether hosts you already have should be updated (new details filled in, tags added) or skipped.</li>
+<li>Click <strong>Import</strong>.</li>
+</ol>
+<p>Good to know:</p>
+<ul>
+<li>Tags in one cell can be separated by <code>;</code>, <code>,</code> or <code>|</code>.</li>
+<li>A host cell like <code>admin@10.0.0.9:2022</code> fills in the user and port too.</li>
+<li>Columns that look like passwords are shown as locked and never read. 7 Term doesn't import passwords from anywhere.</li>
+</ul>
+<h2 id="connecting">Connecting</h2>
+<ul>
+<li><strong>Open a terminal:</strong> double-click a host, press Return, or hover and click <strong>SSH</strong>.</li>
+<li><strong>Browse files:</strong> hover and click <strong>SFTP</strong>, or press ⌥⌘Return. See <a href="#copying-files">Copying files</a>.</li>
+<li><strong>Any host, without saving it:</strong> ⌘T for <strong>Quick Connect</strong>. Type <code>host</code>, <code>user@host</code> or <code>user@host:port</code>. Aliases from ssh_config work too. Click <strong>Connect</strong> for a terminal or <strong>SFTP</strong> for the file browser.</li>
+</ul>
+<p>Each connection opens in a tab. ⇧⌘] and ⇧⌘[ move between tabs, and ⌘W closes the current one.</p>
+<p>The dot on a tab is green while connected and grey after the session ends. When a session ends, press ⇧⌘R to reconnect in the same tab. If nothing answers, 7 Term gives up after 15 seconds and says so, rather than waiting in silence.</p>
+<p><strong>Right-click a host</strong> for more options: <strong>SFTP Prompt</strong> opens the classic <code>sftp&gt;</code> command line, and <strong>Open in Transmit/ForkLift</strong> appears if one of those apps is installed.</p>
+<h2 id="signing-in">Signing in</h2>
+<p>Choose how each host signs in under <strong>Sign in with</strong> in the host form.</p>
+<p><strong>Agent / ssh_config</strong> (the default)
+ssh works as it does in Terminal: your agent, then the keys and settings in <code>~/.ssh/config</code>, then a password prompt in the terminal if all else fails.</p>
+<p><strong>Key file</strong>
+Choose a private key (not the <code>.pub</code> file). Only that key is offered to the server, which avoids "too many authentication failures" when your agent holds many keys. If the key has a passphrase, 7 Term asks for it in a dialog.</p>
+<p><strong>Password in Keychain</strong>
+Type the password once; it's saved in your login Keychain. Each time 7 Term connects, it asks for <strong>Touch ID</strong> (or your Mac password) and hands the password to ssh directly. The password never appears in the terminal, the host list, backups or logs. That also means a server can't trick you into typing it with a fake prompt. A wrong stored password fails after one try instead of asking again and again. Edit the host to replace it.</p>
+<p><strong>Other prompts.</strong> When ssh needs an answer, 7 Term shows it in a dialog with ssh's exact wording. This happens in the file browser, and for hosts set to use the Keychain. It covers a new host key (only <strong>Continue</strong> accepts it), a one-time code, or a key passphrase. In ordinary terminal tabs these prompts appear in the terminal as usual.</p>
+<h2 id="copying-files">Copying files</h2>
+<p>The file browser tab (<strong>SFTP</strong> on a host) shows <strong>this Mac</strong> on the left and the <strong>host</strong> on the right, with a list of transfers underneath.</p>
+<p><strong>Browsing</strong></p>
+<ul>
+<li>Double-click a folder to open it, or press the up arrow to go to the enclosing folder.</li>
+<li>Type a path into the bar at the top of a pane and press Return.</li>
+<li>The eye button shows or hides dotfiles. Click a column heading to sort.</li>
+</ul>
+<p><strong>Copying</strong></p>
+<ul>
+<li><strong>Drag</strong> files or folders from one pane to the other. You can also drag from Finder onto the host pane.</li>
+<li>Or select items and click <strong>Upload →</strong> or <strong>← Download</strong>.</li>
+<li>Double-clicking a file on the host downloads it into the folder shown on the left.</li>
+<li>Folders are copied with everything inside them. Symbolic links are skipped.</li>
+</ul>
+<p><strong>Transfers</strong></p>
+<ul>
+<li>Transfers run one after another. Each shows progress and can be cancelled.</li>
+<li>If a file already exists at the destination, 7 Term asks: <strong>Replace</strong>, <strong>Skip</strong> or <strong>Stop</strong>. Tick "Do this for the rest" to answer once for the whole batch.</li>
+<li>A file is copied under a hidden temporary name and renamed only when complete. A cancelled or failed copy never leaves a half-written file behind, and never damages the file it was replacing.</li>
+<li>Each finished transfer shows its <strong>SHA-256</strong>. Click it to copy the full hash.</li>
+<li>File permissions and modified dates are kept.</li>
+</ul>
+<p><strong>Other file actions (right-click)</strong>
+New Folder, Rename, Copy Path, Show in Finder (this Mac), Delete. Deleting on this Mac moves items to the Trash. Deleting on the host is permanent, and 7 Term says so before doing it.</p>
+<h2 id="logging-sessions">Logging sessions</h2>
+<p>Logging records everything a tab shows, so you have a record of what happened.</p>
+<ul>
+<li><strong>Start or stop:</strong> ⇧⌘L, or the <strong>Log</strong> button at the right of the tab bar. A tab that's logging shows <strong>REC</strong>.</li>
+<li><strong>Always on for a host:</strong> turn on <strong>Log every session</strong> in the host form.</li>
+<li><strong>Where logs go:</strong> <code>~/Documents/7 Term/Logs/</code>, in a folder per host. <strong>Session ▸ Show Log in Finder</strong> takes you there.</li>
+</ul>
+<p>Each stretch of logging (from start to stop) produces:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.log</code></td>
+<td>The raw session, byte for byte, including terminal control codes</td>
+</tr>
+<tr>
+<td><code>.txt</code></td>
+<td>A readable copy without control codes. Full-screen programs such as <code>vim</code> or <code>top</code> are left out.</td>
+</tr>
+<tr>
+<td><code>.log.sha256</code></td>
+<td>The SHA-256 of the <code>.log</code> file</td>
+</tr>
+<tr>
+<td><code>.meta.json</code></td>
+<td>Host, start and end times (UTC, with your time zone offset), size and hash</td>
+</tr>
+</tbody>
+</table>
+<p>To check that a log hasn't changed since it was written, go to its folder in Terminal and run <code>shasum -a 256 -c &lt;name&gt;.log.sha256</code>.</p>
+<p>Existing logs are never overwritten. If 7 Term quits unexpectedly while logging, it finishes the open log the next time it starts.</p>
+<p>In a file browser tab, logging records each connection, transfer and remote delete, with paths, sizes and SHA-256 hashes.</p>
+<h2 id="finding-text">Finding text</h2>
+<p>In a terminal tab, press <strong>⌘F</strong> to search the screen and scrollback. ⌘G finds the next match, ⇧⌘G the previous one. <strong>Edit ▸ Find ▸ Use Selection for Find</strong> searches for the selected text.</p>
+<h2 id="appearance">Appearance</h2>
+<p><strong>Text size</strong> applies to every tab at once:</p>
+<ul>
+<li>⌘+ or ⌘= makes text bigger.</li>
+<li>⌘- makes it smaller.</li>
+<li>⌘0 resets it.</li>
+</ul>
+<p><strong>Themes:</strong> <strong>View ▸ Theme</strong>, or <strong>Settings ▸ Appearance</strong> (⌘,).</p>
+<table>
+<thead>
+<tr>
+<th>Theme</th>
+<th>Look</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>7 Term</td>
+<td>Red on near-black (the default)</td>
+</tr>
+<tr>
+<td>6 Bits</td>
+<td>Green on near-black. The whole app turns green, including the Dock icon.</td>
+</tr>
+<tr>
+<td>Night Red</td>
+<td>Dim red, kind to dark-adapted eyes</td>
+</tr>
+<tr>
+<td>Dark, Light</td>
+<td>Plain</td>
+</tr>
+</tbody>
+</table>
+<p>You can also <strong>import an iTerm2 colour scheme</strong> (<code>.itermcolors</code>) in Settings ▸ Appearance, and choose any monospaced font there.</p>
+<h2 id="backup-and-restore">Backup and restore</h2>
+<p>7 Term can keep a copy of your hosts and settings in iCloud Drive, under <code>iCloud Drive/7 Term/</code>. Turn it on in <strong>Settings ▸ Backup</strong>.</p>
+<ul>
+<li>It saves a couple of seconds after any change, and keeps a dated copy per day for 30 days in <code>History/</code>.</li>
+<li><strong>Included:</strong> hosts, tags, key file paths, theme, font and text size.</li>
+<li><strong>Never included:</strong> passwords, private keys and session logs.</li>
+</ul>
+<p><strong>To restore</strong> (after a reinstall, or on another Mac):</p>
+<ol>
+<li>Choose <strong>File ▸ Restore from Backup…</strong> and pick <code>7term-backup.json</code> or one of the dated copies.</li>
+<li>7 Term adds the hosts you don't already have and applies the saved theme and text size. Hosts already in 7 Term aren't changed.</li>
+<li>Hosts that used <strong>Password in Keychain</strong> need their passwords entered again.</li>
+</ol>
+<h2 id="keyboard-shortcuts">Keyboard shortcuts</h2>
+<table>
+<thead>
+<tr>
+<th>Keys</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>⌘N</td>
+<td>New host</td>
+</tr>
+<tr>
+<td>⌘T</td>
+<td>Quick Connect</td>
+</tr>
+<tr>
+<td>Return, double-click, ⌘Return</td>
+<td>Open a terminal to the selected host</td>
+</tr>
+<tr>
+<td>⌥⌘Return</td>
+<td>Browse files on the selected host</td>
+</tr>
+<tr>
+<td>⌘E / ⌘D / ⌘Delete</td>
+<td>Edit / duplicate / delete the selected host</td>
+</tr>
+<tr>
+<td>⇧⌘I</td>
+<td>Import hosts from a spreadsheet</td>
+</tr>
+<tr>
+<td>⌘W</td>
+<td>Close tab (closes the window when no tabs are open)</td>
+</tr>
+<tr>
+<td>⇧⌘] / ⇧⌘[</td>
+<td>Next / previous tab</td>
+</tr>
+<tr>
+<td>⇧⌘R</td>
+<td>Reconnect an ended session</td>
+</tr>
+<tr>
+<td>⇧⌘L</td>
+<td>Start or stop logging the current tab</td>
+</tr>
+<tr>
+<td>⌘F / ⌘G / ⇧⌘G</td>
+<td>Find / next / previous in the terminal</td>
+</tr>
+<tr>
+<td>⌘+ (⌘=) / ⌘- / ⌘0</td>
+<td>Bigger / smaller / default text size</td>
+</tr>
+<tr>
+<td>⌘,</td>
+<td>Settings</td>
+</tr>
+</tbody>
+</table>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p><strong>"Operation timed out" after 15 seconds</strong>
+Nothing answered on that address and port. Check the host and port in the form, then use <strong>Test Reachability</strong>.</p>
+<p><strong>"Permission denied (publickey)"</strong>
+The server didn't accept any key that was offered. Check the user name. If you use a key file, check that it's the private key and that the server has the matching <code>.pub</code> in <code>~/.ssh/authorized_keys</code>.</p>
+<p><strong>The file browser says the login shell printed text before SFTP started</strong>
+A startup file on the server (for example <code>~/.bashrc</code>) prints something, such as an <code>echo</code> or a banner, even for non-interactive logins, and that text breaks file transfer. Make it print only for interactive shells. For bash: <code>[[ $- == *i* ]] &amp;&amp; echo "welcome"</code>.</p>
+<p><strong>macOS asks whether 7 Term may use a Keychain item</strong>
+This can happen once after you install a new copy of the app. Click <strong>Always Allow</strong>.</p>
+<p><strong>A host key warning ("REMOTE HOST IDENTIFICATION HAS CHANGED")</strong>
+This comes from ssh, not 7 Term. If you rebuilt the machine, remove the old key with <code>ssh-keygen -R &lt;host&gt;</code> and connect again. If you didn't, treat it as a possible attack.</p>
+<p><strong>Where 7 Term keeps things</strong></p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Saved hosts</td>
+<td><code>~/Library/Application Support/7 Term/hosts.sqlite</code></td>
+</tr>
+<tr>
+<td>Logs</td>
+<td><code>~/Documents/7 Term/Logs/</code></td>
+</tr>
+<tr>
+<td>Backups</td>
+<td><code>iCloud Drive/7 Term/</code></td>
+</tr>
+<tr>
+<td>Passwords</td>
+<td>Your login Keychain, under "7 Term"</td>
+</tr>
+</tbody>
+</table></main></div>
+<script>
+const links = [...document.querySelectorAll('nav a')];
+const heads = links.map(a => document.querySelector(a.getAttribute('href')));
+function mark() {
+  let i = heads.findIndex(h => h && h.getBoundingClientRect().top > 120) - 1;
+  if (i < 0) i = window.scrollY > 100 ? heads.length - 1 : 0;
+  links.forEach((a, j) => a.classList.toggle('active', j === i));
+}
+document.addEventListener('scroll', mark, { passive: true }); mark();
+</script>
+</body></html>

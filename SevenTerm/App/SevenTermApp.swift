@@ -64,6 +64,9 @@ struct SevenTermApp: App {
                     .keyboardShortcut("i", modifiers: [.command, .shift])
                 Button("Restore from Backup…") { backup.chooseAndRestore() }
             }
+            CommandGroup(replacing: .help) {
+                HelpMenuButton()
+            }
             // Edit ▸ Find: SwiftTerm's find bar over the current terminal tab.
             CommandGroup(after: .pasteboard) {
                 Divider()
@@ -167,6 +170,13 @@ struct SevenTermApp: App {
             }
         }
 
+        Window("7 Term Help", id: "help") {
+            HelpView()
+                .environment(appearance)
+        }
+        .defaultSize(width: 900, height: 680)
+        .windowToolbarStyle(.unified(showsTitle: false))
+
         Settings {
             TabView {
                 AppearanceSettings()
@@ -179,5 +189,15 @@ struct SevenTermApp: App {
             .environment(\.chrome, Chrome.forPalette(id: appearance.paletteID))
             .tint(Chrome.forPalette(id: appearance.paletteID).accent)
         }
+    }
+}
+
+/// Help ▸ 7 Term Help (⌘?). A view, so it can open the help window.
+private struct HelpMenuButton: View {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Button("7 Term Help") { openWindow(id: "help") }
+            .keyboardShortcut("?", modifiers: .command)
     }
 }
