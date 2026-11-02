@@ -1,6 +1,6 @@
 # XcodeGen spec. Generate the Xcode project with:  xcodegen generate
-# The generated ThreeTerm.xcodeproj is not committed; this file is the source of truth.
-name: ThreeTerm
+# The generated SevenTerm.xcodeproj is not committed; this file is the source of truth.
+name: SevenTerm
 
 options:
   bundleIdPrefix: com.networkitout
@@ -18,28 +18,29 @@ packages:
   SwiftTerm:
     url: https://github.com/migueldeicaza/SwiftTerm
     from: 1.99.2
-  ThreeTermCore:
-    path: Packages/ThreeTermCore
+  SevenTermCore:
+    path: Packages/SevenTermCore
 
 targets:
-  ThreeTerm:
+  SevenTerm:
     type: application
     platform: macOS
     sources:
-      - ThreeTerm
+      - SevenTerm
     dependencies:
       - package: SwiftTerm
-      - package: ThreeTermCore
+      - package: SevenTermCore
     scheme: {}
     settings:
       base:
-        PRODUCT_NAME: "3 Term"
-        PRODUCT_MODULE_NAME: ThreeTerm
-        PRODUCT_BUNDLE_IDENTIFIER: com.networkitout.threeterm
+        PRODUCT_NAME: "7 Term"
+        PRODUCT_MODULE_NAME: SevenTerm
+        PRODUCT_BUNDLE_IDENTIFIER: com.networkitout.seventerm
         CODE_SIGN_STYLE: Automatic
         # ssh needs ~/.ssh, agent sockets and /usr/bin/ssh, so no App Sandbox.
         ENABLE_APP_SANDBOX: NO
         ENABLE_HARDENED_RUNTIME: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: "3 Term"
+        INFOPLIST_KEY_CFBundleDisplayName: "7 Term"
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
