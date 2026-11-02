@@ -7,6 +7,9 @@ options:
   deploymentTarget:
     macOS: "14.0"
   createIntermediateGroups: true
+  # Needed for synchronized folders (below): Xcode then picks up new files
+  # under SevenTerm/ without regenerating the project.
+  projectFormat: xcode16_0
 
 settings:
   base:
@@ -26,7 +29,8 @@ targets:
     type: application
     platform: macOS
     sources:
-      - SevenTerm
+      - path: SevenTerm
+        type: syncedFolder
     dependencies:
       - package: SwiftTerm
       - package: SevenTermCore

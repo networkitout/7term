@@ -41,6 +41,9 @@ final class TerminalSession: Identifiable {
     let id = UUID()
     let kind: Kind
     let target: SSHTarget
+    /// Set when the host's password is in the Keychain: ssh then asks 7 Term
+    /// for it (Touch ID) instead of prompting in the terminal.
+    let keychainHost: (id: String, name: String)?
     /// The saved host's name, when the tab came from the host list.
     let name: String?
     /// Start logging whenever this session connects.
@@ -76,10 +79,12 @@ final class TerminalSession: Identifiable {
         target: SSHTarget,
         name: String? = nil,
         logByDefault: Bool = false,
+        keychainHost: (id: String, name: String)? = nil,
         appearance: Appearance
     ) {
         self.kind = kind
         self.target = target
+        self.keychainHost = keychainHost
         self.name = name
         self.logByDefault = logByDefault
         terminalView = TerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 500))
@@ -101,10 +106,18 @@ final class TerminalSession: Identifiable {
         state = .running
 
         note("connecting to \(target.displayName) with \(kind.rawValue)…")
+        var environment = ChildEnvironment.make(from: ProcessInfo.processInfo.environment)
+        var arguments = kind.arguments(for: target)
+        if let keychainHost {
+            environment += AskPass.environment(hostID: keychainHost.id, hostName: keychainHost.name)
+            // One try with the stored password; a wrong one fails instead of
+            // asking for Touch ID three times.
+            arguments.insert(contentsOf: ["-o", "NumberOfPasswordPrompts=1"], at: 0)
+        }
         process.startProcess(
             executable: kind.executable,
-            args: kind.arguments(for: target),
-            environment: ChildEnvironment.make(from: ProcessInfo.processInfo.environment),
+            args: arguments,
+            environment: environment,
             execName: kind.rawValue
         )
         if logByDefault { startLogging() }

@@ -43,7 +43,11 @@ final class SessionStore {
 
     /// Opens a saved host as an ssh or sftp tab.
     func open(_ entry: HostEntry, kind: TerminalSession.Kind) {
-        open(entry.host.target, kind: kind, name: entry.host.name, logByDefault: entry.host.logByDefault)
+        let keychainHost = entry.host.authMethod == .password ? (id: entry.id, name: entry.host.name) : nil
+        open(
+            entry.host.target, kind: kind, name: entry.host.name,
+            logByDefault: entry.host.logByDefault, keychainHost: keychainHost
+        )
     }
 
     func toggleLoggingSelected() {
@@ -55,10 +59,12 @@ final class SessionStore {
         _ target: SSHTarget,
         kind: TerminalSession.Kind = .ssh,
         name: String? = nil,
-        logByDefault: Bool = false
+        logByDefault: Bool = false,
+        keychainHost: (id: String, name: String)? = nil
     ) {
         let session = TerminalSession(
-            kind: kind, target: target, name: name, logByDefault: logByDefault, appearance: appearance
+            kind: kind, target: target, name: name, logByDefault: logByDefault,
+            keychainHost: keychainHost, appearance: appearance
         )
         sessions.append(session)
         selectedID = session.id

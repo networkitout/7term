@@ -1,11 +1,13 @@
+import AppKit
 import SwiftUI
 import SevenTermCore
 
 /// Add or edit a saved host.
 struct HostFormSheet: View {
     let entry: HostEntry?
-    /// Saves the draft and returns an error message, or nil on success.
-    let onSave: (HostDraft) -> String?
+    /// Saves the draft and a new Keychain password (nil keeps the stored
+    /// one), and returns an error message, or nil on success.
+    let onSave: (HostDraft, String?) -> String?
 
     @Environment(\.dismiss) private var dismiss
     @State private var draft: HostDraft
@@ -13,11 +15,14 @@ struct HostFormSheet: View {
     @State private var saveError: String?
     @State private var probeMessage: String?
     @State private var isProbing = false
+    @State private var password = ""
+    private let hasStoredPassword: Bool
 
-    init(entry: HostEntry?, onSave: @escaping (HostDraft) -> String?) {
+    init(entry: HostEntry?, onSave: @escaping (HostDraft, String?) -> String?) {
         self.entry = entry
         self.onSave = onSave
         _draft = State(initialValue: entry.map(HostDraft.init(entry:)) ?? HostDraft())
+        hasStoredPassword = entry.map { PasswordVault.exists(hostID: $0.id) } ?? false
     }
 
     var body: some View {
@@ -37,6 +42,31 @@ struct HostFormSheet: View {
                         .font(.system(.caption, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .textSelection(.enabled)
+                }
+
+                Section("Authentication") {
+                    Picker("Sign in with", selection: $draft.authMethod) {
+                        Text("Agent / ssh_config").tag(AuthMethod.automatic)
+                        Text("Key file").tag(AuthMethod.keyFile)
+                        Text("Password in Keychain").tag(AuthMethod.password)
+                    }
+                    switch draft.authMethod {
+                    case .automatic:
+                        note("ssh tries your agent (1Password, Secretive, ssh-agent) and ~/.ssh/config, then asks in the terminal.")
+                    case .keyFile:
+                        HStack(alignment: .firstTextBaseline) {
+                            field("Key", text: $draft.identityFile, prompt: "~/.ssh/id_ed25519", error: .identityFile)
+                            Button("Choose…", action: chooseKey)
+                        }
+                        note("Only this key is offered (IdentitiesOnly). A passphrase, if any, is asked for in a dialog.")
+                    case .password:
+                        SecureField(
+                            "Password",
+                            text: $password,
+                            prompt: Text(hasStoredPassword ? "Stored in Keychain. Type to replace it." : "Saved to your login Keychain")
+                        )
+                        note("Touch ID is required each time 7 Term uses it. It's never written to the host list, backups or logs, and never typed into the terminal.")
+                    }
                 }
             }
             .formStyle(.grouped)
@@ -72,7 +102,7 @@ struct HostFormSheet: View {
             }
             .padding(20)
         }
-        .frame(width: 480)
+        .frame(width: 500)
         .onChange(of: draft.hostname) { probeMessage = nil }
         .onChange(of: draft.port) { probeMessage = nil }
     }
@@ -89,6 +119,26 @@ struct HostFormSheet: View {
         }
     }
 
+    private func note(_ text: String) -> some View {
+        Text(text)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func chooseKey() {
+        let panel = NSOpenPanel()
+        panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser.appending(path: ".ssh", directoryHint: .isDirectory)
+        panel.showsHiddenFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.message = "Choose the private key (not the .pub file)."
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let path = url.path
+        draft.identityFile = path.hasPrefix(home + "/") ? "~" + String(path.dropFirst(home.count)) : path
+    }
+
     private var commandPreview: String {
         guard let target = draft.target else { return "ssh …" }
         return "ssh " + target.sshArguments.joined(separator: " ")
@@ -102,7 +152,11 @@ struct HostFormSheet: View {
             showErrors = true
             return
         }
-        if let message = onSave(draft) {
+        if draft.authMethod == .password, password.isEmpty, !hasStoredPassword {
+            saveError = "Enter the password to store in the Keychain."
+            return
+        }
+        if let message = onSave(draft, password.isEmpty ? nil : password) {
             saveError = message
         } else {
             dismiss()

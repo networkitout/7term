@@ -159,3 +159,48 @@ import Testing
         #expect(HostFilter.filter(entries, query: "02", tag: "lab").map(\.host.name) == ["pve02"])
     }
 }
+
+@Suite struct AuthenticationTests {
+    private func draft(_ method: AuthMethod, key: String = "") -> HostDraft {
+        var draft = HostDraft()
+        draft.name = "pve01"
+        draft.hostname = "10.0.0.21"
+        draft.username = "root"
+        draft.authMethod = method
+        draft.identityFile = key
+        return draft
+    }
+
+    @Test func keyFileAddsIdentityArgumentsToSSHAndSFTP() throws {
+        let target = try #require(draft(.keyFile, key: "~/.ssh/id_lab").target)
+        #expect(target.sshArguments == ["-i", "~/.ssh/id_lab", "-o", "IdentitiesOnly=yes", "-l", "root", "--", "10.0.0.21"])
+        #expect(target.sftpArguments == ["-i", "~/.ssh/id_lab", "-o", "IdentitiesOnly=yes", "--", "root@10.0.0.21"])
+    }
+
+    @Test func keyFileRequiresAPath() {
+        #expect(draft(.keyFile).errors[.identityFile] != nil)
+        #expect(draft(.keyFile).target == nil)
+        #expect(draft(.keyFile, key: "-oProxyCommand=x").errors[.identityFile] != nil)
+    }
+
+    @Test func otherMethodsIgnoreTheKeyField() throws {
+        #expect(try #require(draft(.password, key: "~/.ssh/id_lab").target).identityFile == nil)
+        #expect(try #require(draft(.automatic).target).sshArguments == ["-l", "root", "--", "10.0.0.21"])
+    }
+
+    @Test func methodAndKeyArePersisted() throws {
+        let library = try HostLibrary.inMemory()
+        let saved = try library.save(draft(.keyFile, key: "~/.ssh/id_lab"))
+        let loaded = try #require(try library.entries().first)
+        #expect(loaded.host.authMethod == .keyFile)
+        #expect(loaded.host.identityFile == "~/.ssh/id_lab")
+        #expect(loaded.host.target.identityFile == "~/.ssh/id_lab")
+
+        var edit = HostDraft(entry: saved)
+        edit.authMethod = .password
+        try library.save(edit, id: saved.id)
+        let switched = try #require(try library.entries().first)
+        #expect(switched.host.authMethod == .password)
+        #expect(switched.host.identityFile == nil)
+    }
+}

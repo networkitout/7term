@@ -57,6 +57,13 @@ public final class HostLibrary: Sendable {
                 t.add(column: "logByDefault", .boolean).notNull().defaults(to: false)
             }
         }
+        migrator.registerMigration("v3-authentication") { db in
+            // The method and the key's path only. Passwords live in the Keychain.
+            try db.alter(table: "host") { t in
+                t.add(column: "authMethod", .text).notNull().defaults(to: AuthMethod.automatic.rawValue)
+                t.add(column: "identityFile", .text)
+            }
+        }
         return migrator
     }
 
@@ -115,6 +122,8 @@ public final class HostLibrary: Sendable {
             host.port = target.port
             host.username = target.user
             host.logByDefault = draft.logByDefault
+            host.authMethod = draft.authMethod
+            host.identityFile = draft.authMethod == .keyFile ? target.identityFile : nil
             try host.save(db)
 
             try Self.replaceTags(of: host.id, with: tagNames, in: db)

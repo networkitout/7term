@@ -3,7 +3,7 @@ import Foundation
 /// What the host form edits. Text in, validated values out.
 public struct HostDraft: Hashable, Sendable {
     public enum Field: Hashable, Sendable {
-        case name, hostname, port, username, tags
+        case name, hostname, port, username, tags, identityFile
     }
 
     public var name = ""
@@ -13,6 +13,9 @@ public struct HostDraft: Hashable, Sendable {
     /// Comma-separated, as typed.
     public var tags = ""
     public var logByDefault = false
+    public var authMethod: AuthMethod = .automatic
+    /// Path to a private key, as typed or chosen; "~/" is allowed.
+    public var identityFile = ""
 
     public init() {}
 
@@ -23,6 +26,8 @@ public struct HostDraft: Hashable, Sendable {
         username = entry.host.username ?? ""
         tags = entry.tags.joined(separator: ", ")
         logByDefault = entry.host.logByDefault
+        authMethod = entry.host.authMethod
+        identityFile = entry.host.identityFile ?? ""
     }
 
     /// A problem per field, empty when the draft can be saved.
@@ -50,6 +55,15 @@ public struct HostDraft: Hashable, Sendable {
             errors[.username] = "No spaces, and it can't start with \"-\"."
         }
 
+        if authMethod == .keyFile {
+            let key = trimmed(identityFile)
+            if key.isEmpty {
+                errors[.identityFile] = "Choose the private key file."
+            } else if key.hasPrefix("-") || key.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) {
+                errors[.identityFile] = "That doesn't look like a file path."
+            }
+        }
+
         if tagList.contains(where: { $0.count > 40 }) {
             errors[.tags] = "Keep each tag under 40 characters."
         }
@@ -64,12 +78,13 @@ public struct HostDraft: Hashable, Sendable {
     /// (host, port, user) are valid. The name and tags don't affect it, so a
     /// reachability test works before the host is named.
     public var target: SSHTarget? {
-        let connectionFields: Set<Field> = [.hostname, .port, .username]
+        let connectionFields: Set<Field> = [.hostname, .port, .username, .identityFile]
         guard errors.keys.allSatisfy({ !connectionFields.contains($0) }) else { return nil }
         return SSHTarget(
             user: nonEmpty(trimmed(username)),
             host: stripBrackets(trimmed(hostname)),
-            port: Int(trimmed(port))
+            port: Int(trimmed(port)),
+            identityFile: authMethod == .keyFile ? nonEmpty(trimmed(identityFile)) : nil
         )
     }
 

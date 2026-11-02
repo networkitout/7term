@@ -1,6 +1,19 @@
+import AppKit
 import SwiftUI
 
+/// The process entry point. When ssh runs this binary as its password
+/// helper (see AskPass), answer and exit without starting the app.
 @main
+enum Launcher {
+    @MainActor
+    static func main() {
+        if AskPass.isRequested {
+            exit(AskPass.run(arguments: CommandLine.arguments))
+        }
+        SevenTermApp.main()
+    }
+}
+
 struct SevenTermApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var appearance: Appearance

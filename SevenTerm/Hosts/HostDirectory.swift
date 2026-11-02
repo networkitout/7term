@@ -93,14 +93,24 @@ final class HostDirectory {
 
     // MARK: Editing
 
-    /// Saves the draft. Returns an error message, or nil on success.
-    func save(_ draft: HostDraft, id: String?) -> String? {
+    /// Saves the draft. `password` replaces the stored Keychain password
+    /// when given; nil keeps it. Switching away from password auth removes
+    /// it. Returns an error message, or nil on success.
+    func save(_ draft: HostDraft, id: String?, password: String?) -> String? {
         guard let library else { return errorMessage ?? "The host library isn't available." }
         do {
-            try library.save(draft, id: id)
+            let entry = try library.save(draft, id: id)
+            if draft.authMethod == .password {
+                if let password, !password.isEmpty {
+                    try PasswordVault.save(password, hostID: entry.id, label: entry.host.name)
+                }
+            } else {
+                PasswordVault.delete(hostID: entry.id)
+            }
             reload()
             return nil
         } catch {
+            reload()
             return "Couldn't save: \(error.localizedDescription)"
         }
     }
@@ -111,6 +121,7 @@ final class HostDirectory {
 
     func delete(_ entry: HostEntry) {
         perform("delete") { try $0.delete(id: entry.id) }
+        PasswordVault.delete(hostID: entry.id)
     }
 
     func copyHostname(_ entry: HostEntry) {

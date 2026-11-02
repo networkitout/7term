@@ -77,8 +77,8 @@ struct HostSidebar: View {
             }
         }
         .sheet(item: $hosts.editor) { request in
-            HostFormSheet(entry: request.entry) { draft in
-                hosts.save(draft, id: request.entry?.id)
+            HostFormSheet(entry: request.entry) { draft, password in
+                hosts.save(draft, id: request.entry?.id, password: password)
             }
         }
         .confirmationDialog(

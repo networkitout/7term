@@ -1,6 +1,17 @@
 import Foundation
 import GRDB
 
+/// How a saved host authenticates.
+public enum AuthMethod: String, Codable, CaseIterable, Sendable {
+    /// Whatever ssh would do on its own: agent keys (1Password, Secretive,
+    /// ssh-agent), ~/.ssh/config, then a password typed in the terminal.
+    case automatic
+    /// One private key file, passed with -i.
+    case keyFile
+    /// A password kept in the login Keychain, handed to ssh after Touch ID.
+    case password
+}
+
 /// A host the user saved. `hostname` may be an IP, a DNS name, or an alias
 /// from ~/.ssh/config; ssh resolves it either way.
 public struct SavedHost: Codable, Hashable, Sendable, Identifiable {
@@ -12,6 +23,9 @@ public struct SavedHost: Codable, Hashable, Sendable, Identifiable {
     public var sortOrder: Int
     /// Start logging as soon as a session to this host opens.
     public var logByDefault: Bool
+    public var authMethod: AuthMethod
+    /// The private key for `.keyFile`; ignored otherwise.
+    public var identityFile: String?
     public var createdAt: Date
     public var updatedAt: Date
 
@@ -23,6 +37,8 @@ public struct SavedHost: Codable, Hashable, Sendable, Identifiable {
         username: String? = nil,
         sortOrder: Int = 0,
         logByDefault: Bool = false,
+        authMethod: AuthMethod = .automatic,
+        identityFile: String? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -33,12 +49,19 @@ public struct SavedHost: Codable, Hashable, Sendable, Identifiable {
         self.username = username
         self.sortOrder = sortOrder
         self.logByDefault = logByDefault
+        self.authMethod = authMethod
+        self.identityFile = identityFile
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
 
     public var target: SSHTarget {
-        SSHTarget(user: username, host: hostname, port: port)
+        SSHTarget(
+            user: username,
+            host: hostname,
+            port: port,
+            identityFile: authMethod == .keyFile ? identityFile : nil
+        )
     }
 }
 

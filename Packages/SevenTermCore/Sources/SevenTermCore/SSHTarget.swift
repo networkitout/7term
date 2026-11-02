@@ -6,11 +6,14 @@ public struct SSHTarget: Hashable, Sendable {
     public var user: String?
     public var host: String
     public var port: Int?
+    /// A private key to use instead of whatever the agent or ssh_config offers.
+    public var identityFile: String?
 
-    public init(user: String? = nil, host: String, port: Int? = nil) {
+    public init(user: String? = nil, host: String, port: Int? = nil, identityFile: String? = nil) {
         self.user = user
         self.host = host
         self.port = port
+        self.identityFile = identityFile
     }
 
     /// Accepts `host`, `user@host`, `host:port`, `user@host:port`, a bare IPv6
@@ -70,17 +73,24 @@ public struct SSHTarget: Hashable, Sendable {
     /// never be read as an option. Anything not given here (ProxyJump, keys,
     /// ciphers) still comes from ~/.ssh/config.
     public var sshArguments: [String] {
-        var arguments: [String] = []
+        var arguments = identityArguments
         if let user { arguments += ["-l", user] }
         if let port { arguments += ["-p", String(port)] }
         arguments += ["--", host]
         return arguments
     }
 
+    /// `-i <key> -o IdentitiesOnly=yes`: use this key and no other, so a
+    /// full agent can't exhaust the server's MaxAuthTries first.
+    var identityArguments: [String] {
+        guard let identityFile else { return [] }
+        return ["-i", identityFile, "-o", "IdentitiesOnly=yes"]
+    }
+
     /// Arguments for /usr/bin/sftp, which takes the port as -P and the user
     /// in the destination. An IPv6 address is bracketed there.
     public var sftpArguments: [String] {
-        var arguments: [String] = []
+        var arguments = identityArguments
         if let port { arguments += ["-P", String(port)] }
         let hostPart = host.contains(":") ? "[\(host)]" : host
         arguments += ["--", user.map { "\($0)@\(hostPart)" } ?? hostPart]
