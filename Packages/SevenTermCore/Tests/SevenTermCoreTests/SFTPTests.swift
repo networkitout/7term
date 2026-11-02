@@ -41,7 +41,13 @@ struct SFTPClientTests {
         let home = try await client.realPath(".")
         #expect(home.hasPrefix("/"))
         let folder = try scratchFolder()
-        #expect(try await client.realPath(folder.path + "/.") == folder.resolvingSymlinksInPath().path)
+        // realpath(3), as the server uses: on macOS /var is really /private/var,
+        // which Foundation's resolvingSymlinksInPath() hides again.
+        let expected = realpath(folder.path, nil).map { pointer in
+            defer { free(pointer) }
+            return String(cString: pointer)
+        }
+        #expect(try await client.realPath(folder.path + "/.") == expected)
     }
 
     @Test func folderOperations() async throws {
@@ -75,7 +81,7 @@ struct SFTPClientTests {
         #expect(!FileManager.default.fileExists(atPath: root + "/a"))
     }
 
-    @Test(arguments: [0, 1, 32 * 1024, 32 * 1024 + 7, 3 * 1024 * 1024 + 123])
+    @Test(arguments: [0, 1, 32_768, 32_775, 3_145_851]) // empty, 1 byte, one chunk, a chunk plus 7, ~3 MB
     func roundTrip(size: Int) async throws {
         let client = try await connect()
         defer { client.close() }
