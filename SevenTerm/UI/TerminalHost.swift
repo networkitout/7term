@@ -20,7 +20,9 @@ struct TerminalHost: NSViewRepresentable {
             terminal.topAnchor.constraint(equalTo: container.topAnchor, constant: 6),
             terminal.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -4),
         ])
-        Task { @MainActor in
+        // After any sheet that opened this tab has finished closing, which
+        // would otherwise hand focus back to the host list.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             terminal.window?.makeFirstResponder(terminal)
         }
         return container

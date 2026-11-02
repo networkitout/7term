@@ -61,7 +61,7 @@ struct QuickConnectSheet: View {
             }
         }
         .padding(20)
-        .frame(width: 440)
+        .frame(width: 480)
         .onAppear {
             isFocused = true
             settings.baudRate = lastBaud
@@ -132,19 +132,17 @@ struct QuickConnectSheet: View {
                 Picker("Speed", selection: $settings.baudRate) {
                     ForEach(SerialSettings.commonRates, id: \.self) { Text("\($0)").tag($0) }
                 }
-                HStack {
-                    Picker("Data", selection: $settings.dataBits) {
-                        ForEach([8, 7, 6, 5], id: \.self) { Text("\($0)").tag($0) }
-                    }
-                    Picker("Parity", selection: $settings.parity) {
-                        Text("None").tag(SerialSettings.Parity.none)
-                        Text("Even").tag(SerialSettings.Parity.even)
-                        Text("Odd").tag(SerialSettings.Parity.odd)
-                    }
-                    Picker("Stop", selection: $settings.stopBits) {
-                        Text("1").tag(1)
-                        Text("2").tag(2)
-                    }
+                Picker("Data bits", selection: $settings.dataBits) {
+                    ForEach([8, 7, 6, 5], id: \.self) { Text("\($0)").tag($0) }
+                }
+                Picker("Parity", selection: $settings.parity) {
+                    Text("None").tag(SerialSettings.Parity.none)
+                    Text("Even").tag(SerialSettings.Parity.even)
+                    Text("Odd").tag(SerialSettings.Parity.odd)
+                }
+                Picker("Stop bits", selection: $settings.stopBits) {
+                    Text("1").tag(1)
+                    Text("2").tag(2)
                 }
                 Picker("Flow control", selection: $settings.flowControl) {
                     Text("None").tag(SerialSettings.FlowControl.none)
@@ -152,7 +150,10 @@ struct QuickConnectSheet: View {
                     Text("XON/XOFF (software)").tag(SerialSettings.FlowControl.software)
                 }
             }
-            .formStyle(.columns)
+            .formStyle(.grouped)
+            .scrollDisabled(true)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, -20)
             Text(selectedPort.map { "\($0.path) · \(settings.summary)" } ?? "Choose a port.")
                 .font(.system(.caption, design: .monospaced))
                 .foregroundStyle(.secondary)
