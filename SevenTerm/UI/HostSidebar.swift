@@ -16,7 +16,8 @@ struct HostSidebar: View {
             HostRow(
                 entry: entry,
                 connect: { sessions.open(entry, kind: .ssh) },
-                openSFTP: { sessions.open(entry, kind: .files) }
+                openSFTP: { sessions.open(entry, kind: .files) },
+                edit: { hosts.editor = .edit(entry) }
             )
         }
         .scrollContentBackground(.hidden)
@@ -131,6 +132,7 @@ private struct HostRow: View {
     let entry: HostEntry
     let connect: () -> Void
     let openSFTP: () -> Void
+    let edit: () -> Void
     @State private var isHovering = false
 
     var body: some View {
@@ -151,18 +153,29 @@ private struct HostRow: View {
                 }
             }
             Spacer(minLength: 4)
-            HStack(spacing: 8) {
-                Button("SSH", action: connect)
-                    .help("Connect with ssh (Return or double-click)")
-                    .accessibilityLabel("Connect to \(entry.host.name) with ssh")
-                Button("SFTP", action: openSFTP)
-                    .help("Browse files over SFTP (⌥⌘↩)")
-                    .accessibilityLabel("Browse files on \(entry.host.name)")
+            // Shown only on hover, so they don't take room from the name otherwise.
+            if isHovering {
+                HStack(spacing: 8) {
+                    Button("SSH", action: connect)
+                        .help("Connect with ssh (Return or double-click)")
+                        .accessibilityLabel("Connect to \(entry.host.name) with ssh")
+                    Button("SFTP", action: openSFTP)
+                        .help("Browse files over SFTP (⌥⌘↩)")
+                        .accessibilityLabel("Browse files on \(entry.host.name)")
+                }
+                .buttonStyle(.borderless)
+                .font(Brand.mono(10.5, weight: .bold))
+                .foregroundStyle(chrome.accent)
+            }
+            // Always visible, so settings don't depend on knowing to right-click.
+            Button(action: edit) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 11))
             }
             .buttonStyle(.borderless)
-            .font(Brand.mono(10.5, weight: .bold))
-            .foregroundStyle(chrome.accent)
-            .opacity(isHovering ? 1 : 0)
+            .foregroundStyle(isHovering ? chrome.accent : Color.secondary.opacity(0.6))
+            .help("Edit host settings (⌘E)")
+            .accessibilityLabel("Edit \(entry.host.name)")
         }
         .contentShape(Rectangle())
         .onHover { isHovering = $0 }
