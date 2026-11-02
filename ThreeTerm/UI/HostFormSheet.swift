@@ -29,6 +29,7 @@ struct HostFormSheet: View {
                     field("Port", text: $draft.port, prompt: "22, or from ssh_config", error: .port)
                     field("User", text: $draft.username, prompt: "From ssh_config, or your Mac user", error: .username)
                     field("Tags", text: $draft.tags, prompt: "proxmox, lab", error: .tags)
+                    Toggle("Log every session to this host", isOn: $draft.logByDefault)
                 } header: {
                     Text(entry == nil ? "New Host" : "Edit Host")
                 } footer: {
@@ -47,25 +48,27 @@ struct HostFormSheet: View {
                     .padding(.horizontal, 20)
             }
 
+            if let probeMessage {
+                Text(probeMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 20)
+            }
+
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Button(isProbing ? "Testing…" : "Test Reachability") {
                     Task { await probe() }
                 }
                 .disabled(draft.target == nil || isProbing)
                 .help("Checks that the port accepts a TCP connection. Never logs in.")
-
-                if let probeMessage {
-                    Text(probeMessage)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                        .textSelection(.enabled)
-                }
                 Spacer()
                 Button("Cancel", role: .cancel) { dismiss() }
                     .keyboardShortcut(.cancelAction)
                 Button(entry == nil ? "Add Host" : "Save", action: save)
                     .keyboardShortcut(.defaultAction)
+                    .tint(Brand.red)
             }
             .padding(20)
         }

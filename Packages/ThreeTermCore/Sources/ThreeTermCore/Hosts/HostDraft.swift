@@ -12,6 +12,7 @@ public struct HostDraft: Hashable, Sendable {
     public var username = ""
     /// Comma-separated, as typed.
     public var tags = ""
+    public var logByDefault = false
 
     public init() {}
 
@@ -21,6 +22,7 @@ public struct HostDraft: Hashable, Sendable {
         port = entry.host.port.map(String.init) ?? ""
         username = entry.host.username ?? ""
         tags = entry.tags.joined(separator: ", ")
+        logByDefault = entry.host.logByDefault
     }
 
     /// A problem per field, empty when the draft can be saved.

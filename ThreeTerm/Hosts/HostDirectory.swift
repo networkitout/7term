@@ -32,6 +32,11 @@ final class HostDirectory {
     private(set) var errorMessage: String?
     var query = ""
     var editor: HostEditorRequest?
+    /// The sidebar row selected, as "<section>|<host id>" (a host with two
+    /// tags has a row in each section).
+    var selectedRowID: String?
+    /// A host waiting for the delete confirmation.
+    var pendingDelete: HostEntry?
     var isImportPresented = false
     private(set) var importCandidates: [SSHConfigAlias] = []
 
@@ -61,6 +66,19 @@ final class HostDirectory {
 
     func entry(id: String) -> HostEntry? {
         entries.first { $0.id == id }
+    }
+
+    static func rowID(section: HostFilter.Section, entry: HostEntry) -> String {
+        section.id + "|" + entry.id
+    }
+
+    func entry(forRow rowID: String?) -> HostEntry? {
+        guard let rowID, let hostID = rowID.split(separator: "|").last else { return nil }
+        return entry(id: String(hostID))
+    }
+
+    var selectedEntry: HostEntry? {
+        entry(forRow: selectedRowID)
     }
 
     func reload() {

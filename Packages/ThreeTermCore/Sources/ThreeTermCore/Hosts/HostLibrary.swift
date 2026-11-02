@@ -52,6 +52,11 @@ public final class HostLibrary: Sendable {
                 t.primaryKey(["hostId", "tagId"])
             }
         }
+        migrator.registerMigration("v2-log-by-default") { db in
+            try db.alter(table: "host") { t in
+                t.add(column: "logByDefault", .boolean).notNull().defaults(to: false)
+            }
+        }
         return migrator
     }
 
@@ -109,6 +114,7 @@ public final class HostLibrary: Sendable {
             host.hostname = target.host
             host.port = target.port
             host.username = target.user
+            host.logByDefault = draft.logByDefault
             try host.save(db)
 
             try Self.replaceTags(of: host.id, with: tagNames, in: db)

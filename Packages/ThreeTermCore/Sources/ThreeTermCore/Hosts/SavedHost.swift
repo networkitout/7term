@@ -10,6 +10,8 @@ public struct SavedHost: Codable, Hashable, Sendable, Identifiable {
     public var port: Int?
     public var username: String?
     public var sortOrder: Int
+    /// Start logging as soon as a session to this host opens.
+    public var logByDefault: Bool
     public var createdAt: Date
     public var updatedAt: Date
 
@@ -20,6 +22,7 @@ public struct SavedHost: Codable, Hashable, Sendable, Identifiable {
         port: Int? = nil,
         username: String? = nil,
         sortOrder: Int = 0,
+        logByDefault: Bool = false,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -29,6 +32,7 @@ public struct SavedHost: Codable, Hashable, Sendable, Identifiable {
         self.port = port
         self.username = username
         self.sortOrder = sortOrder
+        self.logByDefault = logByDefault
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }

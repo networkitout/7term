@@ -32,6 +32,7 @@ struct QuickConnectSheet: View {
                     .keyboardShortcut(.cancelAction)
                 Button("Connect", action: submit)
                     .keyboardShortcut(.defaultAction)
+                    .tint(Brand.red)
                     .disabled(target == nil)
             }
         }

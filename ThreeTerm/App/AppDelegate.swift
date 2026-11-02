@@ -4,6 +4,10 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     weak var store: SessionStore?
 
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        LogLocation.repairInBackground()
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         true
     }

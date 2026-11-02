@@ -6,37 +6,36 @@ import ThreeTermCore
 struct HostSidebar: View {
     @Environment(HostDirectory.self) private var hosts
     @Environment(SessionStore.self) private var sessions
-    @State private var selection: String?
-    @State private var pendingDelete: HostEntry?
 
     var body: some View {
         @Bindable var hosts = hosts
 
-        List(selection: $selection) {
+        List(selection: $hosts.selectedRowID) {
             ForEach(hosts.sections) { section in
                 Section(section.title) {
                     ForEach(section.entries) { entry in
                         HostRow(entry: entry) { connect(entry) }
-                            .tag(Self.rowID(section: section, entry: entry))
+                            .tag(HostDirectory.rowID(section: section, entry: entry))
                     }
                 }
             }
         }
         .contextMenu(forSelectionType: String.self) { rowIDs in
-            if let entry = entry(forRow: rowIDs.first) {
+            if let entry = hosts.entry(forRow: rowIDs.first) {
                 Button("Connect") { connect(entry) }
                 Divider()
                 Button("Edit…") { hosts.editor = .edit(entry) }
                 Button("Duplicate") { hosts.duplicate(entry) }
                 Button("Copy Hostname") { hosts.copyHostname(entry) }
                 Divider()
-                Button("Delete…", role: .destructive) { pendingDelete = entry }
+                Button("Delete…", role: .destructive) { hosts.pendingDelete = entry }
             } else {
                 Button("New Host…") { hosts.editor = .new }
             }
         } primaryAction: { rowIDs in
-            if let entry = entry(forRow: rowIDs.first) { connect(entry) }
+            if let entry = hosts.entry(forRow: rowIDs.first) { connect(entry) }
         }
+        .onDeleteCommand { hosts.pendingDelete = hosts.selectedEntry }
         .searchable(text: $hosts.query, placement: .sidebar, prompt: "Filter hosts")
         .overlay { emptyState }
         .safeAreaInset(edge: .bottom) {
@@ -64,12 +63,12 @@ struct HostSidebar: View {
             }
         }
         .confirmationDialog(
-            "Delete \(pendingDelete?.host.name ?? "host")?",
+            "Delete \(hosts.pendingDelete?.host.name ?? "host")?",
             isPresented: Binding(
-                get: { pendingDelete != nil },
-                set: { if !$0 { pendingDelete = nil } }
+                get: { hosts.pendingDelete != nil },
+                set: { if !$0 { hosts.pendingDelete = nil } }
             ),
-            presenting: pendingDelete
+            presenting: hosts.pendingDelete
         ) { entry in
             Button("Delete", role: .destructive) { hosts.delete(entry) }
         } message: { _ in
@@ -82,10 +81,12 @@ struct HostSidebar: View {
             ContentUnavailableView {
                 Label("No Saved Hosts", systemImage: "server.rack")
             } description: {
-                Text("Add one, or import the aliases in ~/.ssh/config.")
+                Text("Add one, or import your ~/.ssh/config aliases.")
             } actions: {
-                Button("New Host…") { hosts.editor = .new }
-                Button("Import from ~/.ssh/config…") { hosts.presentImport() }
+                VStack(spacing: 8) {
+                    Button("New Host…") { hosts.editor = .new }
+                    Button("Import from ssh_config…") { hosts.presentImport() }
+                }
             }
         } else if hosts.sections.isEmpty {
             ContentUnavailableView.search(text: hosts.query)
@@ -93,17 +94,7 @@ struct HostSidebar: View {
     }
 
     private func connect(_ entry: HostEntry) {
-        sessions.open(entry.host.target, name: entry.host.name)
-    }
-
-    /// A host with two tags shows in two sections, so the row ID includes the section.
-    private static func rowID(section: HostFilter.Section, entry: HostEntry) -> String {
-        section.id + "|" + entry.id
-    }
-
-    private func entry(forRow rowID: String?) -> HostEntry? {
-        guard let rowID, let hostID = rowID.split(separator: "|").last else { return nil }
-        return hosts.entry(id: String(hostID))
+        sessions.open(entry.host.target, name: entry.host.name, logByDefault: entry.host.logByDefault)
     }
 }
 
@@ -117,11 +108,13 @@ private struct HostRow: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.host.name)
                     .lineLimit(1)
-                Text(entry.host.target.displayName)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                if entry.host.target.displayName != entry.host.name {
+                    Text(entry.host.target.displayName)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
             }
             Spacer(minLength: 4)
             Button("SSH", action: connect)

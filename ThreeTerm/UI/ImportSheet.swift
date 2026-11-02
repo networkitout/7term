@@ -75,6 +75,7 @@ struct ImportSheet: View {
                         onImport(aliases.filter { chosen.contains($0.alias) }, tag)
                     }
                     .keyboardShortcut(.defaultAction)
+                    .tint(Brand.red)
                     .disabled(chosen.isEmpty)
                 }
             }

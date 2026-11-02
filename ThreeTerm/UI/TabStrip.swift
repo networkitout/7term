@@ -4,6 +4,17 @@ struct TabStrip: View {
     @Environment(SessionStore.self) private var store
 
     var body: some View {
+        HStack(spacing: 0) {
+            tabs
+            if let selected = store.selected {
+                LoggingButton(session: selected)
+                    .padding(.horizontal, 8)
+            }
+        }
+        .background(.bar)
+    }
+
+    private var tabs: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 2) {
                 ForEach(store.sessions) { session in
@@ -26,7 +37,38 @@ struct TabStrip: View {
             .padding(.horizontal, 6)
             .padding(.vertical, 4)
         }
-        .background(.bar)
+    }
+}
+
+/// Starts or stops logging for the selected tab (⇧⌘L).
+private struct LoggingButton: View {
+    let session: TerminalSession
+
+    var body: some View {
+        Button {
+            session.toggleLogging()
+        } label: {
+            Label(session.isLogging ? "Stop Logging" : "Log",
+                  systemImage: session.isLogging ? "stop.circle.fill" : "record.circle")
+                .font(.system(size: 12))
+        }
+        .buttonStyle(.borderless)
+        .disabled(session.state != .running)
+        .help(session.isLogging ? "Stop logging this tab (⇧⌘L)" : "Log this tab's output (⇧⌘L)")
+    }
+}
+
+/// Logging is shown with a shape and a word, never color alone,
+/// because red is also 3 Term's accent.
+private struct RecordingBadge: View {
+    var body: some View {
+        Text("REC")
+            .font(.system(size: 9, weight: .heavy, design: .rounded))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 1)
+            .background(Capsule().fill(Brand.red))
+            .accessibilityHidden(true)
     }
 }
 
@@ -47,6 +89,9 @@ private struct TabButton: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .frame(maxWidth: 180, alignment: .leading)
+            if session.isLogging {
+                RecordingBadge()
+            }
             Button(action: close) {
                 Image(systemName: "xmark")
                     .font(.system(size: 9, weight: .bold))
@@ -72,7 +117,7 @@ private struct TabButton: View {
         .onTapGesture(perform: select)
         .onHover { isHovering = $0 }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(session.title), \(statusText)")
+        .accessibilityLabel("\(session.title), \(statusText)\(session.isLogging ? ", logging" : "")")
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }
 

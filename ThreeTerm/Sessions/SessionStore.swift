@@ -23,9 +23,17 @@ final class SessionStore {
         return selected.state != .running
     }
 
+    var canToggleLoggingSelected: Bool {
+        selected?.state == .running
+    }
+
+    func toggleLoggingSelected() {
+        selected?.toggleLogging()
+    }
+
     /// Opens a new tab. `name` is a saved host's name; quick connections pass nil.
-    func open(_ target: SSHTarget, name: String? = nil) {
-        let session = TerminalSession(target: target, name: name)
+    func open(_ target: SSHTarget, name: String? = nil, logByDefault: Bool = false) {
+        let session = TerminalSession(target: target, name: name, logByDefault: logByDefault)
         sessions.append(session)
         selectedID = session.id
         session.start()

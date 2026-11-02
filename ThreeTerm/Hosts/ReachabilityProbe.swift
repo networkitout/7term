@@ -85,7 +85,7 @@ enum ReachabilityProbe {
                 case .ready:
                     attempt.finish(.open)
                 case .waiting(let error), .failed(let error):
-                    attempt.finish(.unreachable(error.localizedDescription))
+                    attempt.finish(.unreachable(shortDescription(error)))
                 default:
                     break
                 }
@@ -94,6 +94,18 @@ enum ReachabilityProbe {
             DispatchQueue.global().asyncAfter(deadline: .now() + timeoutSeconds) {
                 attempt.finish(.timedOut)
             }
+        }
+    }
+
+    /// "Connection refused" rather than "The operation couldn't be completed. (…)".
+    private static func shortDescription(_ error: NWError) -> String {
+        switch error {
+        case .posix(let code):
+            return String(cString: strerror(code.rawValue))
+        case .dns(let code):
+            return "DNS lookup failed (\(code))"
+        default:
+            return error.localizedDescription
         }
     }
 

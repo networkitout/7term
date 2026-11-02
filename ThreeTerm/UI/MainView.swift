@@ -16,7 +16,6 @@ struct MainView: View {
         } detail: {
             SessionArea()
         }
-        .tint(Brand.red)
         .sheet(isPresented: $hosts.isImportPresented) {
             ImportSheet(
                 aliases: hosts.importCandidates,
