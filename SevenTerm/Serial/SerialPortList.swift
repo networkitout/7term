@@ -2,6 +2,7 @@ import Foundation
 import IOKit
 import IOKit.serial
 import Observation
+import SevenTermCore
 
 /// A serial port macOS can see right now.
 struct SerialPortInfo: Identifiable, Hashable, Sendable {
@@ -67,6 +68,25 @@ final class SerialPortList {
                 self?.refresh()
             }
         }
+    }
+
+    /// Where a saved serial entry's adapter is now. The saved path if it's
+    /// connected; otherwise the adapter with the same USB serial number;
+    /// otherwise the only connected adapter of the same make and model
+    /// (adapters without serial numbers are named after their USB socket).
+    /// Falls back to the saved path, which then fails with "isn't connected".
+    nonisolated static func resolve(savedPath: String, details: SerialHostDetails) -> String {
+        let ports = scan()
+        if ports.contains(where: { $0.path == savedPath }) { return savedPath }
+        if let serial = details.usbSerialNumber, !serial.isEmpty,
+           let match = ports.first(where: { $0.serialNumber == serial }) {
+            return match.path
+        }
+        if let vendor = details.vendorID, let product = details.productID {
+            let same = ports.filter { $0.vendorID == vendor && $0.productID == product }
+            if same.count == 1 { return same[0].path }
+        }
+        return savedPath
     }
 
     // MARK: IOKit

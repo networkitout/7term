@@ -14,6 +14,9 @@ public struct BackupSnapshot: Codable, Equatable, Sendable {
         public var logByDefault: Bool
         public var authMethod: AuthMethod
         public var identityFile: String?
+        /// Missing in backups from before serial support: those are ssh.
+        public var kind: HostKind?
+        public var serial: SerialHostDetails?
         public var createdAt: Date
         public var updatedAt: Date
 
@@ -27,6 +30,8 @@ public struct BackupSnapshot: Codable, Equatable, Sendable {
             logByDefault = entry.host.logByDefault
             authMethod = entry.host.authMethod
             identityFile = entry.host.identityFile
+            kind = entry.host.kind
+            serial = entry.host.serial
             createdAt = entry.host.createdAt
             updatedAt = entry.host.updatedAt
         }
@@ -35,6 +40,7 @@ public struct BackupSnapshot: Codable, Equatable, Sendable {
             SavedHost(
                 id: id, name: name, hostname: hostname, port: port, username: username,
                 logByDefault: logByDefault, authMethod: authMethod, identityFile: identityFile,
+                kind: kind ?? .ssh, serial: serial,
                 createdAt: createdAt, updatedAt: updatedAt
             )
         }

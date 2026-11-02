@@ -118,11 +118,11 @@ struct SevenTermApp: App {
                     if let entry = hosts.selectedEntry { sessions.open(entry, kind: .files) }
                 }
                 .keyboardShortcut(.return, modifiers: [.command, .option])
-                .disabled(hosts.selectedEntry == nil)
+                .disabled(hosts.selectedEntry == nil || hosts.selectedEntry?.host.kind == .serial)
                 Button("SFTP Prompt") {
                     if let entry = hosts.selectedEntry { sessions.open(entry, kind: .sftp) }
                 }
-                .disabled(hosts.selectedEntry == nil)
+                .disabled(hosts.selectedEntry == nil || hosts.selectedEntry?.host.kind == .serial)
                 ForEach(FileTransferApp.installed) { app in
                     Button("Open in \(app.name)") {
                         if let entry = hosts.selectedEntry {

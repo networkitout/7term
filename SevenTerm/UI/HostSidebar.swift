@@ -24,12 +24,16 @@ struct HostSidebar: View {
         .background(chrome.panel)
         .contextMenu(forSelectionType: String.self) { hostIDs in
             if let entry = hostIDs.first.flatMap(hosts.entry(id:)) {
-                Button("Connect with SSH") { sessions.open(entry, kind: .ssh) }
-                Button("Browse Files (SFTP)") { sessions.open(entry, kind: .files) }
-                Button("SFTP Prompt") { sessions.open(entry, kind: .sftp) }
-                ForEach(FileTransferApp.installed) { app in
-                    Button("Open in \(app.name)") {
-                        Task { await app.open(entry.host.target) }
+                if entry.host.kind == .serial {
+                    Button("Open Serial Console") { sessions.open(entry, kind: .ssh) }
+                } else {
+                    Button("Connect with SSH") { sessions.open(entry, kind: .ssh) }
+                    Button("Browse Files (SFTP)") { sessions.open(entry, kind: .files) }
+                    Button("SFTP Prompt") { sessions.open(entry, kind: .sftp) }
+                    ForEach(FileTransferApp.installed) { app in
+                        Button("Open in \(app.name)") {
+                            Task { await app.open(entry.host.target) }
+                        }
                     }
                 }
                 Divider()
@@ -135,14 +139,21 @@ private struct HostRow: View {
     let edit: () -> Void
     @State private var isHovering = false
 
+    /// user@host:port for ssh; port and settings for serial.
+    private var subtitle: String {
+        guard entry.host.kind == .serial else { return entry.host.target.displayName }
+        let port = (entry.host.hostname as NSString).lastPathComponent.replacingOccurrences(of: "cu.", with: "")
+        return "\(port) · \(entry.host.serial?.settings.summary ?? "9600 8N1")"
+    }
+
     var body: some View {
         HStack(spacing: 6) {
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.host.name)
                     .font(Brand.mono(13, weight: .medium))
                     .lineLimit(1)
-                if entry.host.target.displayName != entry.host.name {
-                    Text(entry.host.target.displayName)
+                if subtitle != entry.host.name {
+                    Text(subtitle)
                         .font(Brand.mono(10.5))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -156,12 +167,18 @@ private struct HostRow: View {
             // Shown only on hover, so they don't take room from the name otherwise.
             if isHovering {
                 HStack(spacing: 8) {
-                    Button("SSH", action: connect)
-                        .help("Connect with ssh (Return or double-click)")
-                        .accessibilityLabel("Connect to \(entry.host.name) with ssh")
-                    Button("SFTP", action: openSFTP)
-                        .help("Browse files over SFTP (⌥⌘↩)")
-                        .accessibilityLabel("Browse files on \(entry.host.name)")
+                    if entry.host.kind == .serial {
+                        Button("OPEN", action: connect)
+                            .help("Open the serial console (Return or double-click)")
+                            .accessibilityLabel("Open the serial console \(entry.host.name)")
+                    } else {
+                        Button("SSH", action: connect)
+                            .help("Connect with ssh (Return or double-click)")
+                            .accessibilityLabel("Connect to \(entry.host.name) with ssh")
+                        Button("SFTP", action: openSFTP)
+                            .help("Browse files over SFTP (⌥⌘↩)")
+                            .accessibilityLabel("Browse files on \(entry.host.name)")
+                    }
                 }
                 .buttonStyle(.borderless)
                 .font(Brand.mono(10.5, weight: .bold))

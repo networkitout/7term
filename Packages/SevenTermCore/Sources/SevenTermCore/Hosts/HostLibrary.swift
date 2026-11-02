@@ -64,6 +64,14 @@ public final class HostLibrary: Sendable {
                 t.add(column: "identityFile", .text)
             }
         }
+        migrator.registerMigration("v4-serial") { db in
+            // Serial entries keep the port path in hostname and their
+            // settings as JSON in serial.
+            try db.alter(table: "host") { t in
+                t.add(column: "kind", .text).notNull().defaults(to: HostKind.ssh.rawValue)
+                t.add(column: "serial", .text)
+            }
+        }
         return migrator
     }
 
@@ -106,7 +114,9 @@ public final class HostLibrary: Sendable {
     /// Returns the saved entry. Throws `HostLibraryError.invalidDraft` otherwise.
     @discardableResult
     public func save(_ draft: HostDraft, id: String? = nil, now: Date = Date()) throws -> HostEntry {
-        guard draft.isValid, let target = draft.target else { throw HostLibraryError.invalidDraft }
+        guard draft.isValid else { throw HostLibraryError.invalidDraft }
+        if draft.kind == .serial { return try saveSerial(draft, id: id, now: now) }
+        guard let target = draft.target else { throw HostLibraryError.invalidDraft }
         let tagNames = draft.tagList
 
         return try database.write { db in
@@ -124,8 +134,38 @@ public final class HostLibrary: Sendable {
             host.logByDefault = draft.logByDefault
             host.authMethod = draft.authMethod
             host.identityFile = draft.authMethod == .keyFile ? target.identityFile : nil
+            host.kind = .ssh
+            host.serial = nil
             try host.save(db)
 
+            try Self.replaceTags(of: host.id, with: tagNames, in: db)
+            try Self.deleteUnusedTags(in: db)
+            return HostEntry(host: host, tags: tagNames.sorted {
+                $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
+            })
+        }
+    }
+
+    private func saveSerial(_ draft: HostDraft, id: String?, now: Date) throws -> HostEntry {
+        let tagNames = draft.tagList
+        return try database.write { db in
+            var host: SavedHost
+            if let id, let existing = try SavedHost.fetchOne(db, key: id) {
+                host = existing
+                host.updatedAt = now
+            } else {
+                host = SavedHost(id: id ?? UUID().uuidString, name: "", hostname: "", createdAt: now, updatedAt: now)
+            }
+            host.name = draft.trimmedName
+            host.hostname = draft.serialPath.trimmingCharacters(in: .whitespaces)
+            host.port = nil
+            host.username = nil
+            host.logByDefault = draft.logByDefault
+            host.authMethod = .automatic
+            host.identityFile = nil
+            host.kind = .serial
+            host.serial = draft.serial
+            try host.save(db)
             try Self.replaceTags(of: host.id, with: tagNames, in: db)
             try Self.deleteUnusedTags(in: db)
             return HostEntry(host: host, tags: tagNames.sorted {
@@ -179,7 +219,9 @@ public final class HostLibrary: Sendable {
             for backup in hosts {
                 guard try SavedHost.fetchOne(db, key: backup.id) == nil else { continue }
                 var draft = HostDraft()
+                draft.kind = backup.kind ?? .ssh
                 draft.hostname = backup.hostname
+                draft.serialPath = backup.hostname
                 draft.port = backup.port.map(String.init) ?? ""
                 draft.username = backup.username ?? ""
                 draft.name = backup.name

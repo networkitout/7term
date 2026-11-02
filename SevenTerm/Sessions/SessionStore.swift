@@ -41,8 +41,17 @@ final class SessionStore {
         selected?.state == .running
     }
 
-    /// Opens a saved host as an ssh or sftp tab.
+    /// Opens a saved host as an ssh or sftp tab, or a serial entry as a
+    /// serial tab whatever `kind` asks for.
     func open(_ entry: HostEntry, kind: TerminalSession.Kind) {
+        if entry.host.kind == .serial {
+            let details = entry.host.serial ?? SerialHostDetails()
+            openSerial(
+                path: SerialPortList.resolve(savedPath: entry.host.hostname, details: details),
+                settings: details.settings, name: entry.host.name, logByDefault: entry.host.logByDefault
+            )
+            return
+        }
         let keychainHost = entry.host.authMethod == .password ? (id: entry.id, name: entry.host.name) : nil
         open(
             entry.host.target, kind: kind, name: entry.host.name,
