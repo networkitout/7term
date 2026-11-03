@@ -22,7 +22,7 @@ settings:
     DEVELOPMENT_TEAM: "LCHHA2FL5U"
     # Sparkle's public update key, from Sparkle's generate_keys (see
     # docs/releasing.md). Empty disables update checks in local builds.
-    SPARKLE_PUBLIC_KEY: ""
+    SPARKLE_PUBLIC_KEY: "URKqnRAnAOLmcmp5bYBB6rdXMbG6iMaIZdonmMajgco="
 
 packages:
   # Exact versions: a release build is reproducible from its commit.
