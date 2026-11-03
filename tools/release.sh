@@ -20,8 +20,13 @@ APP_NAME="7 Term"
 REPO="networkitout/7term"
 TAG="v$VERSION"
 NOTARY_PROFILE="${NOTARY_PROFILE:-7term-notary}"
-OUT="build/release/$VERSION"
-DERIVED="build/DerivedData"
+# Built outside the repo on purpose: if ~/Documents syncs with iCloud Drive,
+# iCloud tags new files there with extended attributes, and codesign and
+# notarization reject an app carrying them ("detritus not allowed").
+# ~/Library/Caches never syncs.
+RELEASE_ROOT="${RELEASE_DIR:-$HOME/Library/Caches/7term-release}"
+OUT="$RELEASE_ROOT/$VERSION"
+DERIVED="$RELEASE_ROOT/DerivedData"
 TEAM_ID="$(sed -n 's/^ *DEVELOPMENT_TEAM: *"\{0,1\}\([A-Z0-9]*\)"\{0,1\}.*/\1/p' project.yml | head -1)"
 SPARKLE_KEY="$(sed -n 's/^ *SPARKLE_PUBLIC_KEY: *"\{0,1\}\([^"]*\)"\{0,1\}.*/\1/p' project.yml | head -1)"
 # Each release needs a higher build number for Sparkle; the commit count works.
@@ -75,6 +80,8 @@ PLIST
 xcodebuild -exportArchive -archivePath "$OUT/7Term.xcarchive" \
     -exportOptionsPlist "$OUT/ExportOptions.plist" -exportPath "$OUT/export" -quiet
 APP="$OUT/export/$APP_NAME.app"
+# Drop any Finder or file-provider metadata before checking the signature.
+xattr -cr "$APP"
 codesign --verify --deep --strict "$APP"
 codesign -dv "$APP" 2>&1 | grep -E "Authority=Developer ID Application|TeamIdentifier" | sed 's/^/  /'
 
@@ -102,7 +109,7 @@ step "Writing the update feed (appcast.xml)"
 GENERATE_APPCAST="$(find "$DERIVED/SourcePackages/artifacts" -path '*Sparkle*/bin/generate_appcast' -type f | head -1)"
 [ -x "$GENERATE_APPCAST" ] || fail "Couldn't find Sparkle's generate_appcast under $DERIVED/SourcePackages/artifacts."
 # Every published DMG is kept here, so the feed can offer delta updates later.
-UPDATES="build/release/updates"
+UPDATES="$RELEASE_ROOT/updates"
 mkdir -p "$UPDATES"
 cp "$OUT/$DMG_NAME" "$UPDATES/"
 "$GENERATE_APPCAST" \

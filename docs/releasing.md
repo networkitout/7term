@@ -2,7 +2,9 @@
 
 `tools/release.sh 1.0.0` builds a Release copy, signs it with your Developer ID, has Apple notarize it, packs it in a signed and notarized DMG, writes Sparkle's update feed, and publishes a GitHub release with both files attached. Apps already installed find the update through **7 Term ▸ Check for Updates…** or Sparkle's own daily check.
 
-Try `tools/release.sh 1.0.0 --no-publish` first: it does everything except tag and publish, and leaves the results in `build/release/1.0.0/`.
+Try `tools/release.sh 1.0.0 --no-publish` first: it does everything except tag and publish, and leaves the results in `~/Library/Caches/7term-release/1.0.0/`.
+
+Release builds happen there, outside the repo, because a repo in an iCloud-synced `~/Documents` gets extended attributes on new files, which make code signing and notarization fail ("resource fork, Finder information, or similar detritus not allowed"). Set `RELEASE_DIR` to build somewhere else.
 
 ## One-time setup
 
@@ -45,4 +47,4 @@ Back up the private key (`generate_keys -x sparkle-key.txt`, then keep that file
 1. Commit everything (the script refuses to build from uncommitted changes).
 2. `tools/release.sh 1.2.0`
 
-The build number is the commit count, so it always goes up, which Sparkle needs to see a newer version. Release DMGs are also kept in `build/release/updates/`; keep that folder between releases if you want Sparkle's smaller delta updates later.
+The build number is the commit count, so it always goes up, which Sparkle needs to see a newer version. Release DMGs are also kept in `~/Library/Caches/7term-release/updates/`; keep that folder between releases if you want Sparkle's smaller delta updates later.
