@@ -47,6 +47,16 @@ Nice to have, not planned:
 - Drag from the remote pane straight into Finder (file promises).
 - Drop onto a folder row instead of into the folder that's open.
 
+## Install on your Mac
+
+```
+tools/install.sh
+```
+
+Builds a Release copy and puts it in `/Applications`, replacing any older copy and reopening it. Xcode has to be installed but doesn't need to be open. Run it again after pulling changes to update. Your hosts, settings and logs are kept: they don't live in the app.
+
+Until releases are signed with a Developer ID (milestone 13), each build is signed only for this Mac. macOS may ask once per new build whether 7 Term can use a saved Keychain password; choose **Always Allow**.
+
 ## Build
 
 Requirements: macOS 14 or later, Xcode 26 or later (SwiftTerm needs Swift 6.2 tools), and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
