@@ -12,3 +12,7 @@ build/
 .build/
 .swiftpm/
 # Package.resolved files are committed: they pin exact dependency versions.
+
+# Sample exports from other apps (may hold host details)
+*.rtsz
+*.rtsx

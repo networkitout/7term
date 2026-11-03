@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 import SevenTermCore
 
 /// File ▸ Import Hosts…: paste cells copied from Excel or Numbers, open a
-/// CSV, or open another app's export (SecureCRT, PuTTY/KiTTY, MobaXterm,
+/// CSV, or open another app's export (Royal TSX, SecureCRT, PuTTY/KiTTY, MobaXterm,
 /// FileZilla, Ansible, Tabby). Shows what each row becomes before anything
 /// is saved. Passwords are never read from any of them.
 struct SpreadsheetImportSheet: View {
@@ -77,7 +77,7 @@ struct SpreadsheetImportSheet: View {
                 Button("From Another App…") { chooseAppExport() }
                     .help(ForeignImportFormat.allCases.map(\.hint).uniqued().joined(separator: "\n\n"))
             }
-            Text("From another app: SecureCRT, PuTTY or KiTTY, MobaXterm, FileZilla, an Ansible inventory, or Tabby. Hover the button for where each keeps its sessions.")
+            Text("From another app: Royal TSX, SecureCRT, PuTTY or KiTTY, MobaXterm, FileZilla, an Ansible inventory, or Tabby. Hover the button for where each keeps its sessions.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -161,10 +161,6 @@ struct SpreadsheetImportSheet: View {
     }
 
     private func loadAppExport(_ url: URL) {
-        if ["rtsz", "rtsx"].contains(url.pathExtension.lowercased()) {
-            message = "RoyalTSX documents aren't supported yet. Export the connections from Royal TSX as CSV and use Open CSV… for now."
-            return
-        }
         let result: ForeignImportResult
         let format: ForeignImportFormat
         do {

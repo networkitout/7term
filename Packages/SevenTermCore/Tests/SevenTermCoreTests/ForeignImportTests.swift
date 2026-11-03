@@ -230,6 +230,48 @@ import Testing
         #expect(result.skipped == ["zsh: local profile"])
     }
 
+    /// Laid out like a real Royal TSX 6 document: flat objects linked by
+    /// ParentID, built-in top-level folders, only non-default fields written.
+    @Test func royalTSXDocument() throws {
+        let xml = """
+            \u{FEFF}<?xml version="1.0" encoding="utf-8"?>
+            <RTSZDocument>
+              <RoyalDocument><ID>doc</ID><Name>Lab</Name><PasswordHash>xyz</PasswordHash></RoyalDocument>
+              <RoyalTrash><ID>trash</ID><Name>Trashcan</Name><ParentID>doc</ParentID></RoyalTrash>
+              <RoyalFolder><ID>conn</ID><Name>Connections</Name><ParentID>doc</ParentID></RoyalFolder>
+              <RoyalFolder><ID>cred</ID><Name>Credentials</Name><ParentID>doc</ParentID></RoyalFolder>
+              <RoyalFolder><ID>prox</ID><Name>Proxmox</Name><ParentID>conn</ParentID></RoyalFolder>
+              <RoyalFolder><ID>nodes</ID><Name>Nodes</Name><ParentID>prox</ParentID></RoyalFolder>
+              <RoyalSSHConnection>
+                <ID>a</ID><Name>pve1</Name><ParentID>nodes</ParentID><URI>10.9.9.9</URI><Port>2222</Port>
+                <ConnectionType>ssh;SSH</ConnectionType><IsTelnetConnection>False</IsTelnetConnection>
+                <IsSerialPortConnection>False</IsSerialPortConnection><IsConnectionTemplate>False</IsConnectionTemplate>
+                <CredentialUsername>root</CredentialUsername><CredentialPassword>hunter2</CredentialPassword>
+              </RoyalSSHConnection>
+              <RoyalSSHConnection><ID>b</ID><Name>Terminal</Name><ParentID>conn</ParentID><URI>192.168.1.20</URI><Port>22</Port></RoyalSSHConnection>
+              <RoyalSSHConnection><ID>c</ID><Name>old switch</Name><ParentID>conn</ParentID><URI>10.0.0.2</URI><IsTelnetConnection>True</IsTelnetConnection></RoyalSSHConnection>
+              <RoyalSSHConnection><ID>d</ID><Name>deleted</Name><ParentID>trash</ParentID><URI>10.0.0.3</URI></RoyalSSHConnection>
+              <RoyalFileTransferConnection><ID>e</ID><Name>File Transfer</Name><ParentID>conn</ParentID><URI>10.0.0.4</URI><Protocol>0</Protocol><Port>21</Port></RoyalFileTransferConnection>
+              <RoyalFileTransferConnection><ID>f</ID><Name>sftp box</Name><ParentID>prox</ParentID><URI>10.0.0.5</URI><Port>22</Port></RoyalFileTransferConnection>
+              <RoyalRDSConnection><ID>g</ID><Name>desktop</Name><ParentID>conn</ParentID><URI>10.0.0.6</URI></RoyalRDSConnection>
+            </RTSZDocument>
+            """
+        #expect(ForeignImportFormat.detect(fileName: "Lab.rtsz", text: xml) == .royalTS)
+        let result = try RoyalTSImport.parse(String(xml.drop { $0 == "\u{FEFF}" }))
+        #expect(result.hosts == [
+            ImportedHost(name: "pve1", host: "10.9.9.9", port: 2222, user: "root", tags: ["Proxmox", "Nodes"]),
+            ImportedHost(name: "Terminal", host: "192.168.1.20"),
+            ImportedHost(name: "sftp box", host: "10.0.0.5", tags: ["Proxmox"]),
+        ])
+        #expect(result.skipped == [
+            "old switch: telnet connection",
+            "File Transfer: file transfer on port 21 (only SFTP is imported)",
+            "desktop: RDS connection",
+        ])
+        #expect(!String(describing: result).contains("hunter2"))
+        #expect(throws: (any Error).self) { try RoyalTSImport.parse("<html></html>") }
+    }
+
     @Test func resultsGoThroughTheUsualChecks() throws {
         let library = try HostLibrary.inMemory()
         var draft = HostDraft()

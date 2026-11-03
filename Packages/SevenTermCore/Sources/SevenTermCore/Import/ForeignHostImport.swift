@@ -59,10 +59,11 @@ public struct ForeignImportResult: Equatable, Sendable {
 
 /// The other apps 7 Term can import from.
 public enum ForeignImportFormat: String, CaseIterable, Sendable {
-    case secureCRT, putty, mobaXterm, fileZilla, ansibleINI, ansibleYAML, tabby
+    case royalTS, secureCRT, putty, mobaXterm, fileZilla, ansibleINI, ansibleYAML, tabby
 
     public var title: String {
         switch self {
+        case .royalTS: "Royal TSX"
         case .secureCRT: "SecureCRT"
         case .putty: "PuTTY / KiTTY"
         case .mobaXterm: "MobaXterm"
@@ -75,6 +76,8 @@ public enum ForeignImportFormat: String, CaseIterable, Sendable {
     /// Where to find the file to choose, shown in the import sheet.
     public var hint: String {
         switch self {
+        case .royalTS:
+            "Your Royal TSX document (.rtsz). SSH connections are imported; folders become tags."
         case .secureCRT:
             "Choose SecureCRT's Sessions folder: ~/Library/Application Support/VanDyke/SecureCRT/Config/Sessions (or Config/Sessions on Windows)."
         case .putty:
@@ -94,6 +97,7 @@ public enum ForeignImportFormat: String, CaseIterable, Sendable {
     public static func detect(fileName: String, text: String) -> ForeignImportFormat? {
         let name = fileName.lowercased()
         let head = String(text.prefix(4096))
+        if name.hasSuffix(".rtsz") || name.hasSuffix(".rtsx") || head.contains("<RTSZDocument") { return .royalTS }
         if name.hasSuffix(".reg") || head.contains("\\SimonTatham\\PuTTY\\Sessions") || head.contains("\\KiTTY\\Sessions") {
             return .putty
         }
@@ -115,6 +119,7 @@ public enum ForeignImportFormat: String, CaseIterable, Sendable {
     /// uses `parseSecureCRT(files:)` instead.
     public func parse(_ text: String) throws -> ForeignImportResult {
         switch self {
+        case .royalTS: return try RoyalTSImport.parse(text)
         case .secureCRT: return SecureCRTImport.parse(files: [("Session.ini", text)])
         case .putty: return PuTTYImport.parse(text)
         case .mobaXterm: return MobaXtermImport.parse(text)

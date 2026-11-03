@@ -487,3 +487,142 @@ public enum TabbyImport {
         return result
     }
 }
+
+// MARK: - Royal TS / Royal TSX (.rtsz, .rtsx)
+
+/// A Royal TSX document is UTF-8 XML. Every object is a direct child of
+/// `<RTSZDocument>` and points at its folder with `<ParentID>`:
+///
+///     <RoyalFolder><ID>f1</ID><Name>Connections</Name><ParentID>doc</ParentID></RoyalFolder>
+///     <RoyalSSHConnection>
+///       <ID>c1</ID><Name>pve1</Name><ParentID>f1</ParentID>
+///       <URI>10.0.0.10</URI><Port>22</Port><ConnectionType>ssh;SSH</ConnectionType>
+///       <IsTelnetConnection>False</IsTelnetConnection>
+///       <CredentialUsername>root</CredentialUsername>
+///     </RoyalSSHConnection>
+///
+/// Royal only writes fields that differ from their defaults. Its built-in
+/// top-level folders (Connections, Credentials, Tasks) aren't tags; folders
+/// below them are. Anything in the trash, templates, telnet, serial, RDP,
+/// VNC and web connections are left out.
+public enum RoyalTSImport {
+    public static func parse(_ text: String) throws -> ForeignImportResult {
+        let delegate = Delegate()
+        let parser = XMLParser(data: Data(text.utf8))
+        parser.delegate = delegate
+        guard parser.parse(), delegate.sawDocument else {
+            throw CocoaError(.fileReadCorruptFile, userInfo: [NSLocalizedDescriptionKey: "That isn't a Royal TS document."])
+        }
+        return build(delegate.objects)
+    }
+
+    struct Object {
+        var kind: String
+        var fields: [String: String] = [:]
+        var id: String { fields["ID"] ?? "" }
+        var parent: String { fields["ParentID"] ?? "" }
+        func flag(_ name: String) -> Bool { fields[name]?.lowercased() == "true" }
+    }
+
+    private static let builtInFolders: Set<String> = ["Connections", "Credentials", "Tasks"]
+
+    static func build(_ objects: [Object]) -> ForeignImportResult {
+        let byID = Dictionary(objects.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var result = ForeignImportResult()
+
+        /// Folder names from the top down, or nil when it's in the trash.
+        func folders(of object: Object) -> [String]? {
+            var names: [String] = []
+            var next = byID[object.parent]
+            var guardCount = 0
+            while let current = next, guardCount < 64 {
+                guardCount += 1
+                switch current.kind {
+                case "RoyalTrash": return nil
+                case "RoyalFolder":
+                    let isTopLevel = byID[current.parent]?.kind == "RoyalDocument"
+                    let name = current.fields["Name"] ?? ""
+                    if !(isTopLevel && builtInFolders.contains(name)), !name.isEmpty { names.insert(name, at: 0) }
+                    next = byID[current.parent]
+                default:
+                    next = nil
+                }
+            }
+            return names
+        }
+
+        for object in objects where object.kind.hasSuffix("Connection") {
+            let name = object.fields["Name"] ?? object.fields["URI"] ?? "connection"
+            guard let path = folders(of: object) else { continue } // in the trash
+            if object.flag("IsConnectionTemplate") { continue }
+            let port = object.fields["Port"].flatMap { Int($0) }
+
+            switch object.kind {
+            case "RoyalSSHConnection":
+                if object.flag("IsTelnetConnection") {
+                    result.skipped.append("\(name): telnet connection")
+                    continue
+                }
+                if object.flag("IsSerialPortConnection") {
+                    result.skipped.append("\(name): serial port (add it in 7 Term as a serial console)")
+                    continue
+                }
+            case "RoyalFileTransferConnection":
+                // Only SFTP; Royal's protocol codes aren't documented, so go by port.
+                guard port == 22 else {
+                    result.skipped.append("\(name): file transfer on port \(port.map(String.init) ?? "?") (only SFTP is imported)")
+                    continue
+                }
+            default:
+                let type = object.kind.replacingOccurrences(of: "Royal", with: "").replacingOccurrences(of: "Connection", with: "")
+                result.skipped.append("\(name): \(type) connection")
+                continue
+            }
+
+            guard let host = object.fields["URI"]?.trimmingCharacters(in: .whitespaces), !host.isEmpty else {
+                result.skipped.append("\(name): no host")
+                continue
+            }
+            result.hosts.append(ImportedHost(
+                name: name, host: host, port: port == 22 ? nil : port,
+                user: object.fields["CredentialUsername"].flatMap { $0.isEmpty ? nil : $0 },
+                tags: path,
+                keyFile: object.fields["CredentialKeyFile"]
+            ))
+        }
+        return result
+    }
+
+    /// Collects each top-level object's direct child fields. Password and
+    /// passphrase fields are skipped without being kept.
+    private final class Delegate: NSObject, XMLParserDelegate {
+        var objects: [Object] = []
+        var sawDocument = false
+        private var depth = 0
+        private var current: Object?
+        private var field: String?
+        private var text = ""
+        private static let secret: Set<String> = ["CredentialPassword", "CredentialPassphrase", "PasswordHash"]
+
+        func parser(_ parser: XMLParser, didStartElement name: String, namespaceURI: String?,
+                    qualifiedName: String?, attributes: [String: String] = [:]) {
+            depth += 1
+            if depth == 1 { sawDocument = name == "RTSZDocument" || name == "RoyalDocument" }
+            if depth == 2 { current = Object(kind: name) }
+            if depth == 3 { field = name; text = "" }
+        }
+
+        func parser(_ parser: XMLParser, foundCharacters string: String) {
+            if depth == 3, let field, !Self.secret.contains(field) { text += string }
+        }
+
+        func parser(_ parser: XMLParser, didEndElement name: String, namespaceURI: String?, qualifiedName: String?) {
+            if depth == 3, let field, !Self.secret.contains(field) {
+                current?.fields[field] = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            if depth == 3 { field = nil; text = "" }
+            if depth == 2, let current { objects.append(current); self.current = nil }
+            depth -= 1
+        }
+    }
+}

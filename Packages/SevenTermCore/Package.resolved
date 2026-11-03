@@ -1,59 +1,24 @@
 {
-  "pins": [
+  "originHash" : "7a4d474ff11e22f05240900ede9f4f346358aeebe30f96d498d4b4d279aa24e5",
+  "pins" : [
     {
-      "identity": "grdb.swift",
-      "kind": "remoteSourceControl",
-      "location": "https://github.com/groue/GRDB.swift",
-      "state": {
-        "revision": "92a554cd0d5e8d67cb18993c6054e73fe42c066c",
-        "version": "7.12.0"
+      "identity" : "grdb.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/groue/GRDB.swift",
+      "state" : {
+        "revision" : "92a554cd0d5e8d67cb18993c6054e73fe42c066c",
+        "version" : "7.12.0"
       }
     },
     {
-      "identity": "h",
-      "kind": "remoteSourceControl",
-      "location": "https://github.com/rarestype/h",
-      "state": {
-        "revision": "aa3626829160917d4378330617971977cbd78f5b",
-        "version": "1.0.1"
-      }
-    },
-    {
-      "identity": "swift-argument-parser",
-      "kind": "remoteSourceControl",
-      "location": "https://github.com/apple/swift-argument-parser",
-      "state": {
-        "revision": "6a52f3251125d74daf04fcbd5e6f08a75d074382",
-        "version": "1.8.2"
-      }
-    },
-    {
-      "identity": "swift-png",
-      "kind": "remoteSourceControl",
-      "location": "https://github.com/tayloraswift/swift-png",
-      "state": {
-        "revision": "2d17c6c51c098628574c0383f1119892655a73a2",
-        "version": "4.5.2"
-      }
-    },
-    {
-      "identity": "swiftterm",
-      "kind": "remoteSourceControl",
-      "location": "https://github.com/migueldeicaza/SwiftTerm",
-      "state": {
-        "revision": "a183c15b52858530a17de57dcc72b93eeebc9857",
-        "version": "1.99.2"
-      }
-    },
-    {
-      "identity": "yams",
-      "kind": "remoteSourceControl",
-      "location": "https://github.com/jpsim/Yams",
-      "state": {
-        "revision": "a27b21e0c81c5bf42049b897a62aaf387e80f279",
-        "version": "6.2.2"
+      "identity" : "yams",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/jpsim/Yams",
+      "state" : {
+        "revision" : "a27b21e0c81c5bf42049b897a62aaf387e80f279",
+        "version" : "6.2.2"
       }
     }
   ],
-  "version": 3
+  "version" : 3
 }
