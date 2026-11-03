@@ -3,9 +3,10 @@ import SwiftUI
 import UniformTypeIdentifiers
 import SevenTermCore
 
-/// File ▸ Import from Spreadsheet…: paste cells copied from Excel or Numbers,
-/// or open a CSV. Shows how each column was read and what each row becomes
-/// before anything is saved.
+/// File ▸ Import Hosts…: paste cells copied from Excel or Numbers, open a
+/// CSV, or open another app's export (SecureCRT, PuTTY/KiTTY, MobaXterm,
+/// FileZilla, Ansible, Tabby). Shows what each row becomes before anything
+/// is saved. Passwords are never read from any of them.
 struct SpreadsheetImportSheet: View {
     @Environment(HostDirectory.self) private var hosts
     @Environment(\.chrome) private var chrome
@@ -16,6 +17,9 @@ struct SpreadsheetImportSheet: View {
     @State private var updateExisting = false
     @State private var message: String?
     @State private var isTargeted = false
+    /// Set when the rows came from another app's export.
+    @State private var appSource: ForeignImportFormat?
+    @State private var skipped: [String] = []
 
     private var candidates: [HostImportCandidate] {
         table?.candidates(existing: hosts.entries, tag: tag) ?? []
@@ -27,10 +31,14 @@ struct SpreadsheetImportSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Import Hosts from a Spreadsheet")
+            Text("Import Hosts")
                 .font(.headline)
             if let table {
-                mapping(table)
+                if let appSource {
+                    appSummary(appSource, count: table.rows.count)
+                } else {
+                    mapping(table)
+                }
                 preview
                 options
             } else {
@@ -66,7 +74,14 @@ struct SpreadsheetImportSheet: View {
                 Button("Paste Rows") { pasteRows() }
                     .keyboardShortcut("v", modifiers: .command)
                 Button("Open CSV…") { chooseFile() }
+                Button("From Another App…") { chooseAppExport() }
+                    .help(ForeignImportFormat.allCases.map(\.hint).uniqued().joined(separator: "\n\n"))
             }
+            Text("From another app: SecureCRT, PuTTY or KiTTY, MobaXterm, FileZilla, an Ansible inventory, or Tabby. Hover the button for where each keeps its sessions.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
@@ -100,6 +115,10 @@ struct SpreadsheetImportSheet: View {
     }
 
     private func load(_ url: URL) {
+        if url.hasDirectoryPath || ["reg", "mxtsessions", "xml", "yaml", "yml", "ini", "rtsz", "rtsx"].contains(url.pathExtension.lowercased()) {
+            loadAppExport(url)
+            return
+        }
         if ["xlsx", "xls", "numbers"].contains(url.pathExtension.lowercased()) {
             message = "7 Term reads CSV, not .\(url.pathExtension) files. In Excel or Numbers, select the cells and copy them, then click Paste Rows. Or export as CSV."
             return
@@ -126,6 +145,90 @@ struct SpreadsheetImportSheet: View {
         if parsed.header == nil { notes.append("No header row, so the columns are a guess. Check them below.") }
         if !parsed.secretColumns.isEmpty { notes.append("Password columns are ignored.") }
         message = notes.joined(separator: " ")
+    }
+
+    // MARK: Another app's export
+
+    private func chooseAppExport() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.showsHiddenFiles = true
+        panel.message = "Choose an export file, or SecureCRT's Sessions folder."
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        loadAppExport(url)
+    }
+
+    private func loadAppExport(_ url: URL) {
+        if ["rtsz", "rtsx"].contains(url.pathExtension.lowercased()) {
+            message = "RoyalTSX documents aren't supported yet. Export the connections from Royal TSX as CSV and use Open CSV… for now."
+            return
+        }
+        let result: ForeignImportResult
+        let format: ForeignImportFormat
+        do {
+            if url.hasDirectoryPath {
+                format = .secureCRT
+                result = SecureCRTImport.parse(files: try Self.sessionFiles(in: url))
+            } else {
+                let text = decodeExportText(try Data(contentsOf: url))
+                guard let detected = ForeignImportFormat.detect(fileName: url.lastPathComponent, text: text) else {
+                    message = "Couldn't tell which app \(url.lastPathComponent) came from."
+                    return
+                }
+                format = detected
+                result = try detected.parse(text)
+            }
+        } catch {
+            message = "Couldn't read \(url.lastPathComponent): \(error.localizedDescription)"
+            return
+        }
+        guard !result.hosts.isEmpty else {
+            message = "No SSH hosts found in \(url.lastPathComponent)"
+                + (result.skipped.isEmpty ? "." : " (\(result.skipped.count) other sessions skipped).")
+            return
+        }
+        appSource = format
+        skipped = result.skipped
+        table = result.table
+        message = "Read \(result.hosts.count) host\(result.hosts.count == 1 ? "" : "s") from \(format.title). Passwords aren't imported."
+    }
+
+    /// SecureCRT's Sessions folder: every .ini below it, with its path.
+    private static func sessionFiles(in folder: URL) throws -> [(path: String, text: String)] {
+        let keys: [URLResourceKey] = [.isRegularFileKey]
+        guard let walker = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: keys) else { return [] }
+        let base = folder.standardizedFileURL.pathComponents.count
+        var files: [(path: String, text: String)] = []
+        while let item = walker.nextObject() as? URL, files.count < 5000 {
+            guard item.pathExtension.lowercased() == "ini",
+                  (try? item.resourceValues(forKeys: Set(keys)))?.isRegularFile == true
+            else { continue }
+            let relative = item.standardizedFileURL.pathComponents.dropFirst(base).joined(separator: "/")
+            files.append((relative, decodeExportText(try Data(contentsOf: item))))
+        }
+        return files
+    }
+
+    private func appSummary(_ format: ForeignImportFormat, count: Int) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label("\(format.title): \(count) SSH host\(count == 1 ? "" : "s")", systemImage: "square.and.arrow.down")
+                .foregroundStyle(chrome.accent)
+            if !skipped.isEmpty {
+                DisclosureGroup("\(skipped.count) left out (not SSH, or no host)") {
+                    ScrollView {
+                        Text(skipped.joined(separator: "\n"))
+                            .font(Brand.mono(10.5))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .textSelection(.enabled)
+                    }
+                    .frame(maxHeight: 70)
+                }
+                .font(.caption)
+            }
+        }
     }
 
     // MARK: Step 2: check the columns and rows
@@ -249,6 +352,8 @@ struct SpreadsheetImportSheet: View {
             if table != nil {
                 Button("Start Over") {
                     table = nil
+                    appSource = nil
+                    skipped = []
                     message = nil
                 }
             }
@@ -276,5 +381,12 @@ struct SpreadsheetImportSheet: View {
         } catch {
             message = "Import failed: \(error.localizedDescription)"
         }
+    }
+}
+
+private extension Array where Element: Hashable {
+    func uniqued() -> [Element] {
+        var seen = Set<Element>()
+        return filter { seen.insert($0).inserted }
     }
 }

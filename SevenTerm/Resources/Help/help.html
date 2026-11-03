@@ -48,6 +48,7 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 <li><a href="#getting-started">Getting started</a></li>
 <li><a href="#saved-hosts">Saved hosts</a></li>
 <li><a href="#connecting">Connecting</a></li>
+<li><a href="#serial-consoles">Serial consoles</a></li>
 <li><a href="#signing-in">Signing in</a></li>
 <li><a href="#copying-files">Copying files</a></li>
 <li><a href="#logging-sessions">Logging sessions</a></li>
@@ -139,6 +140,41 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 <p>Each connection opens in a tab. ⇧⌘] and ⇧⌘[ move between tabs, and ⌘W closes the current one.</p>
 <p>The dot on a tab is green while connected and grey after the session ends. When a session ends, press ⇧⌘R to reconnect in the same tab. If nothing answers, 7 Term gives up after 15 seconds and says so, rather than waiting in silence.</p>
 <p><strong>Right-click a host</strong> for more options: <strong>SFTP Prompt</strong> opens the classic <code>sftp&gt;</code> command line, and <strong>Open in Transmit/ForkLift</strong> appears if one of those apps is installed.</p>
+<h2 id="serial-consoles">Serial consoles</h2>
+<p>7 Term opens USB console cables (switches, routers, firewalls, a Raspberry Pi, a Flipper Zero) in a tab, with the same logging, search, themes and text size as ssh.</p>
+<p><strong>Quick look:</strong> ⌘T, switch to <strong>Serial</strong>, pick the port and speed, and click <strong>Open</strong>. Adapters appear in the list as soon as you plug them in, by name (for example "FTDI FT232R USB UART").</p>
+<p><strong>Save one:</strong> ⌘N, switch the form to <strong>Serial</strong>, and choose:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Usually</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Port</td>
+<td>Your adapter. One that isn't plugged in shows as "(not connected)".</td>
+</tr>
+<tr>
+<td>Speed</td>
+<td>9600 for Cisco, Juniper, Aruba and most network gear; 115200 for a Raspberry Pi</td>
+</tr>
+<tr>
+<td>Data bits, Parity, Stop bits</td>
+<td>8, None, 1 (written "8N1")</td>
+</tr>
+<tr>
+<td>Flow control</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<p>Saved consoles show their port and settings in the list (<code>usbserial-A10K · 9600 8N1</code>). Double-click one, or hover and click <strong>OPEN</strong>.</p>
+<p>7 Term also remembers which adapter you chose. If macOS gives it a different name later (some cables are named after the USB socket they're plugged into), the saved console still finds it.</p>
+<p><strong>Send Break:</strong> <strong>Session ▸ Send Break</strong> (⌘B) holds the line in the break state for 300 ms, which a Cisco device needs to enter ROMMON or password recovery. Logging notes each break.</p>
+<p><strong>Unplugging:</strong> the tab says the port isn't connected. Plug the cable back in and press ⇧⌘R.</p>
+<p><strong>Drivers:</strong> FTDI and CH340 cables work without installing anything. Prolific (PL2303) and Silicon Labs (CP210x) adapters may need the maker's driver: check <strong>System Information ▸ USB</strong> to see which chip yours has. Cisco's own mini-USB console port needs Cisco's driver; its RJ45 console port with a USB cable doesn't.</p>
 <h2 id="signing-in">Signing in</h2>
 <p>Choose how each host signs in under <strong>Sign in with</strong> in the host form.</p>
 <p><strong>Agent / ssh_config</strong> (the default)
@@ -314,6 +350,10 @@ New Folder, Rename, Copy Path, Show in Finder (this Mac), Delete. Deleting on th
 <td>Find / next / previous in the terminal</td>
 </tr>
 <tr>
+<td>⌘B</td>
+<td>Send Break (serial consoles)</td>
+</tr>
+<tr>
 <td>⌘+ (⌘=) / ⌘- / ⌘0</td>
 <td>Bigger / smaller / default text size</td>
 </tr>
@@ -334,6 +374,12 @@ A startup file on the server (for example <code>~/.bashrc</code>) prints somethi
 This can happen once after you install a new copy of the app. Click <strong>Always Allow</strong>.</p>
 <p><strong>A host key warning ("REMOTE HOST IDENTIFICATION HAS CHANGED")</strong>
 This comes from ssh, not 7 Term. If you rebuilt the machine, remove the old key with <code>ssh-keygen -R &lt;host&gt;</code> and connect again. If you didn't, treat it as a possible attack.</p>
+<p><strong>"No serial adapters found"</strong>
+macOS doesn't see a serial port. Try another USB port or cable, then check <strong>System Information ▸ USB</strong>: if the adapter is listed there but not in 7 Term, it needs its maker's driver (common for Prolific and Silicon Labs chips).</p>
+<p><strong>A serial console shows nothing, or garbage</strong>
+Press Return first: many consoles stay silent until you do. Garbage means the speed is wrong. Try 9600, then 115200.</p>
+<p><strong>"…is in use by another app"</strong>
+Another program (screen, minicom, or another 7 Term tab) has the port open. Close it first.</p>
 <p><strong>Where 7 Term keeps things</strong></p>
 <table>
 <thead>

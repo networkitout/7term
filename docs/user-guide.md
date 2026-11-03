@@ -7,6 +7,7 @@ It uses the Mac's own OpenSSH (`/usr/bin/ssh`). Anything you've set up for ssh a
 - [Getting started](#getting-started)
 - [Saved hosts](#saved-hosts)
 - [Connecting](#connecting)
+- [Serial consoles](#serial-consoles)
 - [Signing in](#signing-in)
 - [Copying files](#copying-files)
 - [Logging sessions](#logging-sessions)
@@ -79,6 +80,31 @@ Each connection opens in a tab. ⇧⌘] and ⇧⌘[ move between tabs, and ⌘W 
 The dot on a tab is green while connected and grey after the session ends. When a session ends, press ⇧⌘R to reconnect in the same tab. If nothing answers, 7 Term gives up after 15 seconds and says so, rather than waiting in silence.
 
 **Right-click a host** for more options: **SFTP Prompt** opens the classic `sftp>` command line, and **Open in Transmit/ForkLift** appears if one of those apps is installed.
+
+## Serial consoles
+
+7 Term opens USB console cables (switches, routers, firewalls, a Raspberry Pi, a Flipper Zero) in a tab, with the same logging, search, themes and text size as ssh.
+
+**Quick look:** ⌘T, switch to **Serial**, pick the port and speed, and click **Open**. Adapters appear in the list as soon as you plug them in, by name (for example "FTDI FT232R USB UART").
+
+**Save one:** ⌘N, switch the form to **Serial**, and choose:
+
+| Setting | Usually |
+|---|---|
+| Port | Your adapter. One that isn't plugged in shows as "(not connected)". |
+| Speed | 9600 for Cisco, Juniper, Aruba and most network gear; 115200 for a Raspberry Pi |
+| Data bits, Parity, Stop bits | 8, None, 1 (written "8N1") |
+| Flow control | None |
+
+Saved consoles show their port and settings in the list (`usbserial-A10K · 9600 8N1`). Double-click one, or hover and click **OPEN**.
+
+7 Term also remembers which adapter you chose. If macOS gives it a different name later (some cables are named after the USB socket they're plugged into), the saved console still finds it.
+
+**Send Break:** **Session ▸ Send Break** (⌘B) holds the line in the break state for 300 ms, which a Cisco device needs to enter ROMMON or password recovery. Logging notes each break.
+
+**Unplugging:** the tab says the port isn't connected. Plug the cable back in and press ⇧⌘R.
+
+**Drivers:** FTDI and CH340 cables work without installing anything. Prolific (PL2303) and Silicon Labs (CP210x) adapters may need the maker's driver: check **System Information ▸ USB** to see which chip yours has. Cisco's own mini-USB console port needs Cisco's driver; its RJ45 console port with a USB cable doesn't.
 
 ## Signing in
 
@@ -193,6 +219,7 @@ You can also **import an iTerm2 colour scheme** (`.itermcolors`) in Settings ▸
 | ⇧⌘R | Reconnect an ended session |
 | ⇧⌘L | Start or stop logging the current tab |
 | ⌘F / ⌘G / ⇧⌘G | Find / next / previous in the terminal |
+| ⌘B | Send Break (serial consoles) |
 | ⌘+ (⌘=) / ⌘- / ⌘0 | Bigger / smaller / default text size |
 | ⌘, | Settings |
 
@@ -212,6 +239,15 @@ This can happen once after you install a new copy of the app. Click **Always All
 
 **A host key warning ("REMOTE HOST IDENTIFICATION HAS CHANGED")**
 This comes from ssh, not 7 Term. If you rebuilt the machine, remove the old key with `ssh-keygen -R <host>` and connect again. If you didn't, treat it as a possible attack.
+
+**"No serial adapters found"**
+macOS doesn't see a serial port. Try another USB port or cable, then check **System Information ▸ USB**: if the adapter is listed there but not in 7 Term, it needs its maker's driver (common for Prolific and Silicon Labs chips).
+
+**A serial console shows nothing, or garbage**
+Press Return first: many consoles stay silent until you do. Garbage means the speed is wrong. Try 9600, then 115200.
+
+**"…is in use by another app"**
+Another program (screen, minicom, or another 7 Term tab) has the port open. Close it first.
 
 **Where 7 Term keeps things**
 

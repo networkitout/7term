@@ -13,11 +13,16 @@ let package = Package(
     dependencies: [
         // Exact, so builds are reproducible. Package.resolved is committed.
         .package(url: "https://github.com/groue/GRDB.swift", exact: "7.12.0"),
+        // YAML: Ansible inventories and Tabby's config.yaml.
+        .package(url: "https://github.com/jpsim/Yams", exact: "6.2.2"),
     ],
     targets: [
         .target(
             name: "SevenTermCore",
-            dependencies: [.product(name: "GRDB", package: "GRDB.swift")]
+            dependencies: [
+                .product(name: "GRDB", package: "GRDB.swift"),
+                .product(name: "Yams", package: "Yams"),
+            ]
         ),
         .testTarget(name: "SevenTermCoreTests", dependencies: ["SevenTermCore"]),
     ]

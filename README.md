@@ -24,12 +24,12 @@ Milestones 1 to 9 are built and in use. Saved hosts live in `~/Library/Applicati
 
 ## Plan: 1.0 for other people
 
-In this order. Milestone 10 is built; the rest are planned.
+In this order. Milestones 10 and 11 are done.
 
 | # | Milestone | Notes |
 |---|---|---|
-| 10 | Find in the terminal (⌘F, ⌘G, ⇧⌘G) | Uses SwiftTerm's built-in find bar; Edit ▸ Find |
-| 11 | Serial console ([design](docs/serial.md)) | Native termios, no `screen`. List `/dev/cu.*` ports; saved serial entries with baud, data bits, parity, stop bits, flow control; Send Break for ROMMON and password recovery; logging and tabs as for ssh |
+| 10 | Find in the terminal (⌘F, ⌘G, ⇧⌘G) | Done |
+| 11 | Serial console ([design](docs/serial.md)) | Done. Tested with a Flipper Zero; Send Break still to try on network gear |
 | 12 | Import from other tools | RoyalTSX (.rtsz/.rtsx, zipped XML), SecureCRT (session .ini files, folders become tags), PuTTY/KiTTY (.reg export), MobaXterm (.mxtsessions), FileZilla (sitemanager.xml; its stored passwords are never read), Ansible inventory (INI or YAML; groups become tags), Tabby (config.yaml). Check each format when building. Maybe later: iTerm2 profiles, Cyberduck bookmarks. Reuse the spreadsheet import's preview, dedupe and "passwords never read" rules |
 | 13 | Release | MIT license; Developer ID signing, notarization (notarytool with a Keychain profile), signed DMG on GitHub Releases, Sparkle updates; Homebrew cask later. Not the Mac App Store: its sandbox can't run /usr/bin/ssh with your ssh_config |
 

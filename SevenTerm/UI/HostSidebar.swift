@@ -121,7 +121,7 @@ struct HostSidebar: View {
                 VStack(spacing: 8) {
                     Button("New Host…") { hosts.editor = .new }
                     Button("Import from ssh_config…") { hosts.presentImport() }
-                    Button("Import from Spreadsheet…") { hosts.isSpreadsheetImportPresented = true }
+                    Button("Import from a Spreadsheet or App…") { hosts.isSpreadsheetImportPresented = true }
                 }
             }
         } else if hosts.visibleEntries.isEmpty {

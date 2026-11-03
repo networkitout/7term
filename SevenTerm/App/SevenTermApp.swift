@@ -62,7 +62,7 @@ struct SevenTermApp: App {
                     .keyboardShortcut("t", modifiers: .command)
                 Divider()
                 Button("Import from ~/.ssh/config…") { hosts.presentImport() }
-                Button("Import from Spreadsheet…") { hosts.isSpreadsheetImportPresented = true }
+                Button("Import Hosts (Spreadsheet or Another App)…") { hosts.isSpreadsheetImportPresented = true }
                     .keyboardShortcut("i", modifiers: [.command, .shift])
                 Button("Restore from Backup…") { backup.chooseAndRestore() }
             }
