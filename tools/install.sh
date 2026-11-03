@@ -19,6 +19,16 @@ RESOLVED="SevenTerm.xcodeproj/project.xcworkspace/xcshareddata/swiftpm"
 mkdir -p "$RESOLVED"
 cp Package.resolved "$RESOLVED/Package.resolved"
 
+# Without your team ID the app is signed ad hoc (for this Mac only), and an
+# ad hoc app with the hardened runtime can't load Sparkle.framework. The
+# hardened runtime only matters for notarized releases, so leave it out then.
+EXTRA=()
+TEAM_ID="$(sed -n 's/^ *DEVELOPMENT_TEAM: *"\{0,1\}\([A-Z0-9]*\)"\{0,1\}.*/\1/p' project.yml | head -1)"
+if [ -z "$TEAM_ID" ]; then
+    echo "› No DEVELOPMENT_TEAM in project.yml: building for this Mac only"
+    EXTRA+=(ENABLE_HARDENED_RUNTIME=NO)
+fi
+
 echo "› Building (Release). The first build takes a minute or two."
 xcodebuild \
     -project SevenTerm.xcodeproj \
@@ -27,7 +37,7 @@ xcodebuild \
     -destination "platform=macOS" \
     -derivedDataPath "$BUILD" \
     -quiet \
-    build
+    build ${EXTRA[@]+"${EXTRA[@]}"}
 
 BUILT="$BUILD/Build/Products/Release/$APP_NAME.app"
 [ -d "$BUILT" ] || { echo "Build finished but $BUILT is missing." >&2; exit 1; }
