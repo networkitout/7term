@@ -117,7 +117,7 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 <h3 id="other-actions-right-click-a-host">Other actions (right-click a host)</h3>
 <p><strong>Duplicate</strong>, <strong>Copy Hostname</strong>, and <strong>Delete…</strong>. Deleting removes the host from 7 Term only. Your <code>~/.ssh/config</code> and any open tabs aren't touched, and its stored password is removed from the Keychain.</p>
 <h3 id="importing-many-hosts-at-once">Importing many hosts at once</h3>
-<p><strong>File ▸ Import from Spreadsheet…</strong> (⇧⌘I):</p>
+<p><strong>File ▸ Import Hosts (Spreadsheet or Another App)…</strong> (⇧⌘I):</p>
 <ol>
 <li>In Excel or Numbers, select the cells (including a header row if you have one) and copy them. Then click <strong>Paste Rows</strong>. Or click <strong>Open CSV…</strong>, or drop a CSV file onto the sheet.</li>
 <li>Check the column guesses. Each column has a menu (Name, Host, Port, User, Tags, Key file, Ignore). A header row such as <code>Name, IP, Port, User, Tags</code> is matched automatically.</li>
@@ -131,6 +131,55 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 <li>A host cell like <code>admin@10.0.0.9:2022</code> fills in the user and port too.</li>
 <li>Columns that look like passwords are shown as locked and never read. 7 Term doesn't import passwords from anywhere.</li>
 </ul>
+<h3 id="importing-from-another-app">Importing from another app</h3>
+<p><strong>File ▸ Import Hosts (Spreadsheet or Another App)…</strong> (⇧⌘I), then <strong>From Another App…</strong>. You can also drop the file onto the sheet. 7 Term works out which app it came from:</p>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>What to choose</th>
+<th>Becomes tags</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Royal TSX</td>
+<td>your document (<code>.rtsz</code>)</td>
+<td>folders</td>
+</tr>
+<tr>
+<td>SecureCRT</td>
+<td>its <strong>Sessions</strong> folder: <code>~/Library/Application Support/VanDyke/SecureCRT/Config/Sessions</code></td>
+<td>folders</td>
+</tr>
+<tr>
+<td>PuTTY / KiTTY</td>
+<td>a registry export: <code>reg export HKCU\Software\SimonTatham\PuTTY\Sessions putty.reg</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>MobaXterm</td>
+<td>right-click <strong>User sessions ▸ Export all sessions to file</strong> (<code>.mxtsessions</code>)</td>
+<td>folders</td>
+</tr>
+<tr>
+<td>FileZilla</td>
+<td><strong>File ▸ Export…</strong>, or <code>sitemanager.xml</code> (SFTP sites only)</td>
+<td>folders</td>
+</tr>
+<tr>
+<td>Ansible</td>
+<td>your inventory, INI or YAML</td>
+<td>groups</td>
+</tr>
+<tr>
+<td>Tabby</td>
+<td><code>~/Library/Application Support/tabby/config.yaml</code></td>
+<td>profile group</td>
+</tr>
+</tbody>
+</table>
+<p>You get the same preview as a spreadsheet import, with the same checks and the same choice to skip or update hosts you already have. Sessions that aren't SSH (RDP, VNC, telnet, FTP, web) are listed as left out rather than dropped silently. <strong>Passwords are never imported</strong>, even from files that contain them, and Windows key paths (<code>C:\…</code>) are dropped because they don't exist on a Mac.</p>
 <h2 id="connecting">Connecting</h2>
 <ul>
 <li><strong>Open a terminal:</strong> double-click a host, press Return, or hover and click <strong>SSH</strong>.</li>
@@ -327,7 +376,7 @@ New Folder, Rename, Copy Path, Show in Finder (this Mac), Delete. Deleting on th
 </tr>
 <tr>
 <td>⇧⌘I</td>
-<td>Import hosts from a spreadsheet</td>
+<td>Import hosts from a spreadsheet or another app</td>
 </tr>
 <tr>
 <td>⌘W</td>

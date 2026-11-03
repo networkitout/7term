@@ -56,7 +56,7 @@ The line under the left column shows the exact ssh command 7 Term will run. **Te
 
 ### Importing many hosts at once
 
-**File ▸ Import from Spreadsheet…** (⇧⌘I):
+**File ▸ Import Hosts (Spreadsheet or Another App)…** (⇧⌘I):
 
 1. In Excel or Numbers, select the cells (including a header row if you have one) and copy them. Then click **Paste Rows**. Or click **Open CSV…**, or drop a CSV file onto the sheet.
 2. Check the column guesses. Each column has a menu (Name, Host, Port, User, Tags, Key file, Ignore). A header row such as `Name, IP, Port, User, Tags` is matched automatically.
@@ -68,6 +68,22 @@ Good to know:
 - Tags in one cell can be separated by `;`, `,` or `|`.
 - A host cell like `admin@10.0.0.9:2022` fills in the user and port too.
 - Columns that look like passwords are shown as locked and never read. 7 Term doesn't import passwords from anywhere.
+
+### Importing from another app
+
+**File ▸ Import Hosts (Spreadsheet or Another App)…** (⇧⌘I), then **From Another App…**. You can also drop the file onto the sheet. 7 Term works out which app it came from:
+
+| App | What to choose | Becomes tags |
+|---|---|---|
+| Royal TSX | your document (`.rtsz`) | folders |
+| SecureCRT | its **Sessions** folder: `~/Library/Application Support/VanDyke/SecureCRT/Config/Sessions` | folders |
+| PuTTY / KiTTY | a registry export: `reg export HKCU\Software\SimonTatham\PuTTY\Sessions putty.reg` | — |
+| MobaXterm | right-click **User sessions ▸ Export all sessions to file** (`.mxtsessions`) | folders |
+| FileZilla | **File ▸ Export…**, or `sitemanager.xml` (SFTP sites only) | folders |
+| Ansible | your inventory, INI or YAML | groups |
+| Tabby | `~/Library/Application Support/tabby/config.yaml` | profile group |
+
+You get the same preview as a spreadsheet import, with the same checks and the same choice to skip or update hosts you already have. Sessions that aren't SSH (RDP, VNC, telnet, FTP, web) are listed as left out rather than dropped silently. **Passwords are never imported**, even from files that contain them, and Windows key paths (`C:\…`) are dropped because they don't exist on a Mac.
 
 ## Connecting
 
@@ -213,7 +229,7 @@ You can also **import an iTerm2 colour scheme** (`.itermcolors`) in Settings ▸
 | Return, double-click, ⌘Return | Open a terminal to the selected host |
 | ⌥⌘Return | Browse files on the selected host |
 | ⌘E / ⌘D / ⌘Delete | Edit / duplicate / delete the selected host |
-| ⇧⌘I | Import hosts from a spreadsheet |
+| ⇧⌘I | Import hosts from a spreadsheet or another app |
 | ⌘W | Close tab (closes the window when no tabs are open) |
 | ⇧⌘] / ⇧⌘[ | Next / previous tab |
 | ⇧⌘R | Reconnect an ended session |

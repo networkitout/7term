@@ -21,6 +21,7 @@ struct SevenTermApp: App {
     @State private var hosts: HostDirectory
     @State private var backup: BackupManager
     @State private var serialPorts = SerialPortList()
+    @State private var updater = Updater()
 
     init() {
         // Before anything reads settings or the host library.
@@ -55,6 +56,10 @@ struct SevenTermApp: App {
         // The wordmark replaces the plain window title, as in 6 Bits.
         .windowToolbarStyle(.unified(showsTitle: false))
         .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") { updater.checkForUpdates() }
+                    .disabled(!updater.isAvailable)
+            }
             CommandGroup(replacing: .newItem) {
                 Button("New Host…") { hosts.editor = .new }
                     .keyboardShortcut("n", modifiers: .command)

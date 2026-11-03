@@ -24,14 +24,14 @@ Milestones 1 to 9 are built and in use. Saved hosts live in `~/Library/Applicati
 
 ## Plan: 1.0 for other people
 
-In this order. Milestones 10 and 11 are done.
+In this order. Milestones 10 to 12 are done.
 
 | # | Milestone | Notes |
 |---|---|---|
 | 10 | Find in the terminal (⌘F, ⌘G, ⇧⌘G) | Done |
 | 11 | Serial console ([design](docs/serial.md)) | Done. Tested with a Flipper Zero; Send Break still to try on network gear |
-| 12 | Import from other tools | RoyalTSX (.rtsz/.rtsx, zipped XML), SecureCRT (session .ini files, folders become tags), PuTTY/KiTTY (.reg export), MobaXterm (.mxtsessions), FileZilla (sitemanager.xml; its stored passwords are never read), Ansible inventory (INI or YAML; groups become tags), Tabby (config.yaml). Check each format when building. Maybe later: iTerm2 profiles, Cyberduck bookmarks. Reuse the spreadsheet import's preview, dedupe and "passwords never read" rules |
-| 13 | Release | MIT license; Developer ID signing, notarization (notarytool with a Keychain profile), signed DMG on GitHub Releases, Sparkle updates; Homebrew cask later. Not the Mac App Store: its sandbox can't run /usr/bin/ssh with your ssh_config |
+| 12 | Import from other tools | Done: Royal TSX, SecureCRT, PuTTY/KiTTY, MobaXterm, FileZilla, Ansible inventory (INI/YAML), Tabby. Royal TSX checked against a real document |
+| 13 | Release | Built: MIT license, Sparkle updates, `tools/release.sh` (Developer ID signing, notarization, signed DMG, appcast, GitHub release). Needs the one-time setup in [docs/releasing.md](docs/releasing.md) |
 
 Decided against: keepalives on by default (left to ssh_config), RDP/VNC, sync between Macs, Mosh, a built-in key generator.
 
@@ -136,7 +136,7 @@ Packages/SevenTermCore       Parsing, host storage (GRDB), ssh_config scanning, 
 | ⌘T | Quick connect |
 | Return, double-click or ⌘↩ | Connect to the selected host with ssh |
 | ⌥⌘↩ | Browse files on the selected host (SFTP) |
-| ⇧⌘I | Import hosts from a spreadsheet |
+| ⇧⌘I | Import hosts from a spreadsheet or another app |
 | ⌘E / ⌘D / ⌘⌫ | Edit, duplicate or delete the selected host |
 | ⌘W | Close tab (closes the window when no tabs are open) |
 | ⇧⌘] / ⇧⌘[ | Next / previous tab |

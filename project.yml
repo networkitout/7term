@@ -14,8 +14,15 @@ options:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    MARKETING_VERSION: "0.1.0"
+    # tools/release.sh sets both for each release; these are the defaults.
+    MARKETING_VERSION: "1.0.0"
     CURRENT_PROJECT_VERSION: "1"
+    # Your Apple Developer team (Membership details on developer.apple.com).
+    # Not secret: it's printed in every app you sign.
+    DEVELOPMENT_TEAM: ""
+    # Sparkle's public update key, from Sparkle's generate_keys (see
+    # docs/releasing.md). Empty disables update checks in local builds.
+    SPARKLE_PUBLIC_KEY: ""
 
 packages:
   # Exact versions: a release build is reproducible from its commit.
@@ -25,6 +32,10 @@ packages:
   SwiftTerm:
     url: https://github.com/migueldeicaza/SwiftTerm
     exactVersion: 1.99.2
+  # Updates: "Check for Updates…" and automatic checks.
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.10.0
   SevenTermCore:
     path: Packages/SevenTermCore
 
@@ -38,6 +49,7 @@ targets:
     dependencies:
       - package: SwiftTerm
       - package: SevenTermCore
+      - package: Sparkle
     scheme: {}
     settings:
       base:
@@ -50,5 +62,7 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: YES
+        # Sparkle's keys and the copyright; merged with the generated keys.
+        INFOPLIST_FILE: Config/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: "7 Term"
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools

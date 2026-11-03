@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Merged with the keys Xcode generates (GENERATE_INFOPLIST_FILE). -->
+	<!-- Sparkle: where updates are announced, and the public half of the
+	     key that signs them (the private half stays in your Keychain). -->
+	<key>SUFeedURL</key>
+	<string>https://github.com/networkitout/7term/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>$(SPARKLE_PUBLIC_KEY)</string>
+	<key>SUEnableInstallerLauncherService</key>
+	<false/>
+	<key>NSHumanReadableCopyright</key>
+	<string>© 2026 Laremy Padilla. MIT License.</string>
+</dict>
+</plist>
