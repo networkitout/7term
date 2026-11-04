@@ -1,150 +1,97 @@
 # 7 Term
 
+[![Latest release](https://img.shields.io/github/v/release/networkitout/7term?label=release)](https://github.com/networkitout/7term/releases/latest)
+![macOS 14+](https://img.shields.io/badge/macOS-14%2B-informational)
+![Apple silicon and Intel](https://img.shields.io/badge/Apple%20silicon%20%2B%20Intel-universal-informational)
+[![MIT License](https://img.shields.io/badge/license-MIT-informational)](LICENSE)
+
+A small, native macOS SSH, SFTP and serial console client: a list of your hosts, one click to connect, tabs, and logging you switch on when you need a record. It opens fast and does a few things well.
+
 <img width="2098" height="1272" alt="image" src="https://github.com/user-attachments/assets/ca5839bc-bb15-4468-a7ca-87e3ffad3e37" />
 
+7 Term doesn't reimplement SSH. It runs the Mac's own OpenSSH, so your `~/.ssh/config`, keys, agents (1Password, Secretive, ssh-agent), ProxyJump and `known_hosts` all work exactly as they already do.
 
-A small native macOS SSH and SFTP client for a home lab: a list of hosts, one click to connect, tabs, and logging you switch on per session. It opens fast and does a few things well.
+## Download
 
-7 Term doesn't implement SSH. It runs the system's `/usr/bin/ssh` and `/usr/bin/sftp` in a pseudo-terminal and shows them with [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm), so your `~/.ssh/config`, keys, agents, ProxyJump and `known_hosts` all work as they already do.
+**[Download the latest release](https://github.com/networkitout/7term/releases/latest)** (`7Term-<version>.dmg`), open it, and drag 7 Term to Applications.
 
-**[User guide](docs/user-guide.md)**: how to use 7 Term.
+- **Requires** macOS 14 Sonoma or later, on Apple silicon or Intel.
+- **Signed and notarized** by Apple, so it opens without security warnings.
+- **Updates itself:** 7 Term ▸ Check for Updates…, or let it check automatically. Updates are signed, and a tampered download is refused.
 
-## Status
+## Features
 
-Milestones 1 to 9 are built and in use. Saved hosts live in `~/Library/Application Support/7 Term/hosts.sqlite`.
+- **Saved hosts** with tags, a filter, and one-click SSH or SFTP. Imports your `~/.ssh/config` on first run.
+- **Tabs** for every session, with reconnect (⇧⌘R) and find in the scrollback (⌘F).
+- **File browser:** this Mac and the host side by side, drag and drop, folder copies, a transfer queue, and a SHA-256 for every file copied.
+- **Serial consoles:** USB console cables for switches, routers and firewalls, found by name as you plug them in, with Send Break for ROMMON and password recovery.
+- **Session logging** you switch on per tab or per host: the raw log, a readable copy, and a SHA-256 written as it records, so you can show a log hasn't been changed.
+- **Credentials your way:** your agent and ssh_config, a specific key file, or a password kept in the macOS Keychain and released only after Touch ID.
+- **Import** from Royal TSX, SecureCRT, PuTTY/KiTTY, MobaXterm, FileZilla, Ansible inventories, Tabby, or a spreadsheet. Passwords are never imported.
+- **iCloud backup** of hosts and settings (never passwords or keys), with restore on a new Mac.
+- **Themes:** tactical red, 6 Bits green, Night Red for dark rooms, Dark, Light, or any iTerm2 colour scheme. ⌘+ / ⌘- resizes text in every tab at once.
 
-| # | Milestone | State |
-|---|---|---|
-| 1 | Terminal in a window, with tabs | Done |
-| 2 | Saved host list, tags, filter, import from `~/.ssh/config` | Done |
-| 3 | Per-tab logging to `~/Documents/7 Term/Logs/`, SHA-256 on close | Done |
-| 4 | Themes (7 Term, 6 Bits, Night Red, Dark, Light, .itermcolors import), global ⌘+ / ⌘- / ⌘0 | Done |
-| 5 | SFTP prompt from the same host entry, hand-off to Transmit or ForkLift | Done |
-| 6 | Credentials: agent, key file, Keychain password behind Touch ID | Done |
-| 7 | JSON backup of hosts and settings to iCloud Drive | Done |
-| 8 | File browser: local and remote panes, drag and drop, transfer queue with SHA-256 | Done |
-| 9 | Import hosts from a spreadsheet (pasted cells or CSV) | Done |
+## Documentation
 
-## Plan: 1.0 for other people
+- **[User guide](docs/user-guide.md):** everything above, step by step. It's also built into the app under **Help ▸ 7 Term Help** (⌘?).
+- **[Roadmap](docs/roadmap.md):** what's done, what's next, and what was decided against.
 
-In this order. Milestones 10 to 12 are done.
+## Security and privacy
 
-| # | Milestone | Notes |
-|---|---|---|
-| 10 | Find in the terminal (⌘F, ⌘G, ⇧⌘G) | Done |
-| 11 | Serial console ([design](docs/serial.md)) | Done. Tested with a Flipper Zero; Send Break still to try on network gear |
-| 12 | Import from other tools | Done: Royal TSX, SecureCRT, PuTTY/KiTTY, MobaXterm, FileZilla, Ansible inventory (INI/YAML), Tabby. Royal TSX checked against a real document |
-| 13 | Release | Built: MIT license, Sparkle updates, `tools/release.sh` (Developer ID signing, notarization, signed DMG, appcast, GitHub release). Needs the one-time setup in [docs/releasing.md](docs/releasing.md) |
+- **Your data stays on your Mac.** Hosts and settings are in `~/Library/Application Support/7 Term/`, logs in `~/Documents/7 Term/Logs/`, and passwords in your login Keychain. Nothing is sent anywhere, apart from the update check, which only fetches the release feed from GitHub.
+- **Passwords never touch the terminal.** ssh asks 7 Term for a stored password directly (`SSH_ASKPASS`) after Touch ID, so a remote host can't fake a prompt to collect it.
+- **Logs record output, never keystrokes**, and each one carries a SHA-256 you can check with `shasum -a 256 -c`.
+- **Not sandboxed, on purpose:** ssh needs your `~/.ssh` folder and agent sockets. It uses the hardened runtime and is notarized by Apple.
 
-Decided against: keepalives on by default (left to ssh_config), RDP/VNC, sync between Macs, Mosh, a built-in key generator.
+Found a security problem? Please report it privately; see [SECURITY.md](SECURITY.md).
 
-Also worth considering: port forwards saved with a host, a colour per host (prod vs lab), Option as Meta.
+## Building from source
 
-## Backlog
+You don't need to build 7 Term to use it. If you want to:
 
-Nice to have, not planned:
+**Requirements:** macOS 14 or later, Xcode 26 or later, and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
 
-- Pull hosts from Proxmox: an API token kept in the Keychain lists VMs and containers with their IPs (from the guest agent), tags them by node and pool, and keeps the list in sync. Read-only token. Likely its own milestone after 1.0.
-
-- Resume interrupted transfers: keep the partial file when the connection drops, check the source hasn't changed (size and modified time), continue from the partial size and re-hash the part already copied. Retry button on failed transfers.
-- Drag from the remote pane straight into Finder (file promises).
-- Drop onto a folder row instead of into the folder that's open.
-
-## Install on your Mac
-
-```
+```sh
+git clone https://github.com/networkitout/7term.git
+cd 7term
 tools/install.sh
 ```
 
-Builds a Release copy and puts it in `/Applications`, replacing any older copy and reopening it. Xcode has to be installed but doesn't need to be open. Run it again after pulling changes to update. Your hosts, settings and logs are kept: they don't live in the app.
+`tools/install.sh` generates the Xcode project from `project.yml`, builds a Release copy with the pinned dependency versions, and installs it in `/Applications`. Your hosts and settings are kept. Builds without a `DEVELOPMENT_TEAM` in `project.yml` are signed for your Mac only, and update checks are off in them.
 
-Until releases are signed with a Developer ID (milestone 13), each build is signed only for this Mac. macOS may ask once per new build whether 7 Term can use a saved Keychain password; choose **Always Allow**.
+To work on it in Xcode instead: `xcodegen generate`, then `open SevenTerm.xcodeproj` and Run. The Xcode project is generated and not committed.
 
-## Build
-
-Requirements: macOS 14 or later, Xcode 26 or later (SwiftTerm needs Swift 6.2 tools), and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
+**Tests** cover the logic without UI (SSH targets, host storage, SFTP, serial, logging, imports, backups):
 
 ```sh
-brew install xcodegen
-xcodegen generate
-open SevenTerm.xcodeproj
+cd Packages/SevenTermCore && swift test
 ```
 
-In Xcode, pick your team under Signing & Capabilities for the SevenTerm target, then Run. The Xcode project is generated from `project.yml` and isn't committed; regenerate it after pulling changes that add files.
+**Releases** are made with `tools/release.sh`; see [docs/releasing.md](docs/releasing.md).
 
-The app is deliberately not sandboxed: ssh needs your `~/.ssh` folder and agent sockets.
-
-## Logs
-
-Logging is off until you turn it on for a tab (⇧⌘L or the Log button), or tick "Log every session to this host" on a saved host. Each on/off stretch is one segment in `~/Documents/7 Term/Logs/<host>/`:
-
-| File | What it is |
-|---|---|
-| `<host>_<UTC time>Z_ssh_seg<n>.log` | Raw output bytes, exactly as received. Keystrokes are never logged. |
-| `….log.sha256` | SHA-256 of the raw file, computed while it was written |
-| `….meta.json` | Host, destination, start (UTC and local offset), end, size, hash, and whether it closed cleanly |
-| `….txt` | Readable copy: colors stripped, overwrites applied, full-screen programs replaced by one line |
-
-Verify a log with `shasum -a 256 -c <file>.log.sha256` in its folder. If 7 Term quits without closing a log, the next launch hashes it and marks it `"closedCleanly": false`.
-
-## Credentials
-
-Each saved host picks how it signs in (Edit Host ▸ Authentication):
-
-| Method | What 7 Term does |
-|---|---|
-| Agent / ssh_config (default) | Nothing extra. ssh uses your agent (1Password, Secretive, ssh-agent) and `~/.ssh/config`, then asks in the terminal. |
-| Key file | Adds `-i <key> -o IdentitiesOnly=yes`. |
-| Password in Keychain | Stores the password in your login Keychain. On connect, ssh asks 7 Term for it through `SSH_ASKPASS`; 7 Term requires Touch ID (or your Mac password) and hands it straight to ssh. It is never typed into the terminal, so a remote host can't fake a prompt to collect it. |
-
-For password hosts, ssh's other questions (an unknown host key, a one-time code, a key passphrase) appear as native dialogs showing ssh's exact text. 7 Term's own binary is the helper, so there is nothing extra to install or sign.
-
-## Appearance
-
-**Settings… (⌘,)** picks the theme, font and size; **View ▸ Theme** switches themes from the menu. Size changes apply to every tab at once. Built-in themes: 7 Term (default), 6 Bits green, Night Red (all text dim red, for a dark room), Dark and Light. Any iTerm2 `.itermcolors` scheme can be imported; imported themes are kept in `~/Library/Application Support/7 Term/Themes/`.
-
-The look follows 6 Bits in tactical red: a dot-matrix "7" logo (SSH is a layer 7 protocol), monospaced type, and red `#FF3434` on red-tinted black. The app icon is generated by `tools/make_icon.py`; rerun it after changing the glyph or colors:
-
-```sh
-python3 tools/make_icon.py SevenTerm/Resources/Assets.xcassets/AppIcon.appiconset
-```
-
-## Tests
-
-The logic without UI lives in a local package, tested with Swift Testing:
-
-```sh
-cd Packages/SevenTermCore
-swift test
-```
-
-## Layout
+### Layout
 
 ```
-project.yml                  XcodeGen spec
-SevenTerm/App                App entry, menus, quit confirmation
-SevenTerm/Sessions           Tabs and the ssh process behind each one
-SevenTerm/Hosts              Saved host library, ssh_config import, reachability test
-SevenTerm/UI                 Views, theme, logo
-SevenTerm/Resources          App icon
-tools/make_icon.py           Generates the app icon
-Packages/SevenTermCore       Parsing, host storage (GRDB), ssh_config scanning, logging
+project.yml                  XcodeGen spec (dependencies pinned in Package.resolved)
+SevenTerm/App                App entry, menus, settings
+SevenTerm/Sessions           Tabs: ssh, sftp and serial sessions, logging
+SevenTerm/Files              File browser (SFTP)
+SevenTerm/Serial             Serial port discovery
+SevenTerm/Hosts              Saved host directory, reachability test
+SevenTerm/Credentials        Keychain passwords and the ssh askpass helper
+SevenTerm/UI                 Views, theme, logo, help window
+SevenTerm/Updates            Sparkle
+Packages/SevenTermCore       Logic and tests: hosts (GRDB), SFTP, serial, imports, logging, backup
+tools/                       install.sh, release.sh, icon and help generators
+docs/                        User guide, roadmap, serial design, releasing
 ```
 
-## Keyboard
+## Contributing
 
-| Keys | Action |
-|---|---|
-| ⌘N | New saved host |
-| ⌘T | Quick connect |
-| Return, double-click or ⌘↩ | Connect to the selected host with ssh |
-| ⌥⌘↩ | Browse files on the selected host (SFTP) |
-| ⇧⌘I | Import hosts from a spreadsheet or another app |
-| ⌘E / ⌘D / ⌘⌫ | Edit, duplicate or delete the selected host |
-| ⌘W | Close tab (closes the window when no tabs are open) |
-| ⇧⌘] / ⇧⌘[ | Next / previous tab |
-| ⇧⌘R | Reconnect an ended session |
-| ⇧⌘L | Start or stop logging the current tab |
-| ⌘F / ⌘G / ⇧⌘G | Find, find next, find previous in the terminal |
-| ⌘+ (or ⌘=) / ⌘- / ⌘0 | Bigger, smaller, default text size in every tab |
-| ⌘, | Settings: theme, font, size |
+Bug reports and ideas are welcome as [GitHub issues](https://github.com/networkitout/7term/issues). For anything security-related, use the private route in [SECURITY.md](SECURITY.md) instead.
+
+## License and thanks
+
+7 Term is released under the [MIT License](LICENSE).
+
+Built on [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) (terminal emulation), [GRDB](https://github.com/groue/GRDB.swift) (SQLite), [Sparkle](https://sparkle-project.org) (updates) and [Yams](https://github.com/jpsim/Yams) (YAML), and on the Mac's own OpenSSH.
