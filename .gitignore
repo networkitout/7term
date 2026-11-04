@@ -17,3 +17,36 @@ build/
 *.rtsz
 *.rtsx
 
+
+# Signing material and secrets: never committed. Release tooling reads the
+# signing identity and notarization login from the Keychain.
+*.cer
+*.p12
+*.p8
+*.pem
+*.key
+*.mobileprovision
+*.provisionprofile
+.env
+.env.*
+
+# Local logs and databases
+*.log
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# AI coding assistant instructions and local settings: personal, not shipped
+CLAUDE.md
+CLAUDE.md.*
+CLAUDE.local.md
+.claude/
+AGENTS.md
+GEMINI.md
+.mcp.json
+.cursor/
+.cursorrules
+.windsurfrules
+.codex/
+.aider*
+.github/copilot-instructions.md
