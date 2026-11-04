@@ -1,5 +1,8 @@
 # 7 Term
 
+<img width="2098" height="1272" alt="image" src="https://github.com/user-attachments/assets/ca5839bc-bb15-4468-a7ca-87e3ffad3e37" />
+
+
 A small native macOS SSH and SFTP client for a home lab: a list of hosts, one click to connect, tabs, and logging you switch on per session. It opens fast and does a few things well.
 
 7 Term doesn't implement SSH. It runs the system's `/usr/bin/ssh` and `/usr/bin/sftp` in a pseudo-terminal and shows them with [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm), so your `~/.ssh/config`, keys, agents, ProxyJump and `known_hosts` all work as they already do.
