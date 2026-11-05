@@ -95,6 +95,16 @@ Each connection opens in a tab. ⇧⌘] and ⇧⌘[ move between tabs, and ⌘W 
 
 The dot on a tab is green while connected and grey after the session ends. When a session ends, press ⇧⌘R to reconnect in the same tab. If nothing answers, 7 Term gives up after 15 seconds and says so, rather than waiting in silence.
 
+### Naming and colouring tabs
+
+Several tabs to the same host look alike. To tell them apart, give a tab its own name or a colour. This works for every kind of tab: terminal, `sftp>` prompt, file browser and serial console.
+
+- **Rename:** double-click the tab, or right-click it and choose **Rename Tab…**. Type a name and press Return, or press Esc to cancel. To go back to the usual label, clear the name and press Return.
+- **Colour:** right-click the tab and choose **Tab Colour**: Red, Orange, Yellow, Green, Blue, Purple, Pink, or None. A coloured tab has a bar down its left edge and a light tint.
+- **Reset Name and Colour** in the same menu undoes both.
+
+The name is shown exactly as you type it. It replaces the title the remote shell sets, so a prompt that changes the title won't overwrite it. Hover over a renamed tab to see its usual label. Names and colours stay when you reconnect with ⇧⌘R, but they last only until you close the tab. Logs are still named after the host, never the tab.
+
 **Right-click a host** for more options: **SFTP Prompt** opens the classic `sftp>` command line, and **Open in Transmit/ForkLift** appears if one of those apps is installed.
 
 ## Serial consoles

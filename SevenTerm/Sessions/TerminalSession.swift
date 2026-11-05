@@ -68,23 +68,34 @@ final class TerminalSession: Identifiable {
     @ObservationIgnored private var logWriter: SessionLogWriter?
     @ObservationIgnored private var logSegmentCount = 0
 
-    /// A saved host keeps its name; a quick connection shows what the remote
-    /// shell sets as the title, falling back to user@host.
-    var title: String {
-        let base: String
-        if let name, !name.isEmpty {
-            base = name
-        } else if let remoteTitle, !remoteTitle.isEmpty, kind == .ssh {
-            base = remoteTitle
-        } else {
-            base = target.displayName
-        }
-        switch kind {
-        case .ssh: return base
-        case .sftp: return base + " · sftp"
-        case .files: return base + " · files"
-        case .serial: return name == nil ? base + " · \(serial?.settings.baudRate ?? 9600)" : base
-        }
+    /// The user's own name for this tab (Rename Tab…). Overrides the default
+    /// label, including the remote shell's title; nil or blank restores it.
+    /// In memory only, and kept across reconnects. Set it with `rename(to:)`.
+    private(set) var customTitle: String?
+    /// A colour to tell tabs to the same host apart. In memory only.
+    var tabColor: TabColor = .none
+
+    private var label: TabLabel {
+        TabLabel(
+            kind: TabLabel.Kind(rawValue: kind.rawValue) ?? .ssh,
+            savedName: name,
+            remoteTitle: remoteTitle,
+            destination: target.displayName,
+            baudRate: serial?.settings.baudRate,
+            customTitle: customTitle
+        )
+    }
+
+    /// What the tab shows: the custom name, or else the default label
+    /// (see `TabLabel`).
+    var title: String { label.title }
+
+    /// The label the tab would show without a custom name.
+    var defaultTitle: String { label.defaultTitle }
+
+    /// Gives the tab the user's own name; an empty name restores the default.
+    func rename(to text: String?) {
+        customTitle = TabLabel.normalizedCustomTitle(text)
     }
 
     init(
