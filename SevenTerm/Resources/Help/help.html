@@ -188,6 +188,14 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 </ul>
 <p>Each connection opens in a tab. ⇧⌘] and ⇧⌘[ move between tabs, and ⌘W closes the current one.</p>
 <p>The dot on a tab is green while connected and grey after the session ends. When a session ends, press ⇧⌘R to reconnect in the same tab. If nothing answers, 7 Term gives up after 15 seconds and says so, rather than waiting in silence.</p>
+<h3 id="naming-and-colouring-tabs">Naming and colouring tabs</h3>
+<p>Several tabs to the same host look alike. To tell them apart, give a tab its own name or a colour. This works for every kind of tab: terminal, <code>sftp&gt;</code> prompt, file browser and serial console.</p>
+<ul>
+<li><strong>Rename:</strong> double-click the tab, or right-click it and choose <strong>Rename Tab…</strong>. Type a name and press Return, or press Esc to cancel. To go back to the usual label, clear the name and press Return.</li>
+<li><strong>Colour:</strong> right-click the tab and choose <strong>Tab Colour</strong>: Red, Orange, Yellow, Green, Blue, Purple, Pink, or None. A coloured tab has a bar down its left edge and a light tint.</li>
+<li><strong>Reset Name and Colour</strong> in the same menu undoes both.</li>
+</ul>
+<p>The name is shown exactly as you type it. It replaces the title the remote shell sets, so a prompt that changes the title won't overwrite it. Hover over a renamed tab to see its usual label. Names and colours stay when you reconnect with ⇧⌘R, but they last only until you close the tab. Logs are still named after the host, never the tab.</p>
 <p><strong>Right-click a host</strong> for more options: <strong>SFTP Prompt</strong> opens the classic <code>sftp&gt;</code> command line, and <strong>Open in Transmit/ForkLift</strong> appears if one of those apps is installed.</p>
 <h2 id="serial-consoles">Serial consoles</h2>
 <p>7 Term opens USB console cables (switches, routers, firewalls, a Raspberry Pi, a Flipper Zero) in a tab, with the same logging, search, themes and text size as ssh.</p>
