@@ -108,14 +108,22 @@ spctl --assess --type open --context context:primary-signature -v "$OUT/$DMG_NAM
 step "Writing the update feed (appcast.xml)"
 GENERATE_APPCAST="$(find "$DERIVED/SourcePackages/artifacts" -path '*Sparkle*/bin/generate_appcast' -type f | head -1)"
 [ -x "$GENERATE_APPCAST" ] || fail "Couldn't find Sparkle's generate_appcast under $DERIVED/SourcePackages/artifacts."
-# Every published DMG is kept here, so the feed can offer delta updates later.
+# The feed lists only this release, and no delta updates: every link in it
+# must point at a file this release uploads. Older DMGs and deltas would get
+# this tag's download prefix too and 404 (and GitHub renames assets with
+# spaces, such as "7 Term33-24.delta"). Sparkle only needs the newest item.
 UPDATES="$RELEASE_ROOT/updates"
 mkdir -p "$UPDATES"
 cp "$OUT/$DMG_NAME" "$UPDATES/"
 "$GENERATE_APPCAST" \
     --download-url-prefix "https://github.com/$REPO/releases/download/$TAG/" \
     --link "https://github.com/$REPO" \
+    --maximum-versions 1 \
+    --maximum-deltas 0 \
     -o "$OUT/appcast.xml" "$UPDATES"
+# Fail before publishing if the feed links anything not being uploaded.
+LINKED="$(grep -o "releases/download/$TAG/[^\"]*" "$OUT/appcast.xml" | sed "s|.*/||" | sort -u)"
+[ "$LINKED" = "$DMG_NAME" ] || fail "appcast.xml links files other than $DMG_NAME: $LINKED"
 
 SHA="$(shasum -a 256 "$OUT/$DMG_NAME" | cut -d' ' -f1)"
 echo "  $DMG_NAME  sha256 $SHA"

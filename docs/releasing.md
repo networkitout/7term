@@ -47,4 +47,13 @@ Back up the private key (`generate_keys -x sparkle-key.txt`, then keep that file
 1. Commit everything (the script refuses to build from uncommitted changes).
 2. `tools/release.sh 1.2.0`
 
-The build number is the commit count, so it always goes up, which Sparkle needs to see a newer version. Release DMGs are also kept in `~/Library/Caches/7term-release/updates/`; keep that folder between releases if you want Sparkle's smaller delta updates later.
+The build number is the commit count, so it always goes up, which Sparkle needs to see a newer version. The update feed (`appcast.xml`) lists only the newest release and its DMG, with no delta updates, so every link in it points at a file attached to that GitHub release. The script checks this before publishing.
+
+### If publishing fails partway
+
+The script tags first, then pushes the tag, then creates the release. If it stops after `› Publishing`, don't run it again (the tag already exists). Finish from the repo with the files it left in `~/Library/Caches/7term-release/1.2.0/`:
+
+```
+git push origin v1.2.0
+gh release create v1.2.0 ~/Library/Caches/7term-release/1.2.0/7Term-1.2.0.dmg ~/Library/Caches/7term-release/1.2.0/appcast.xml --repo networkitout/7term --title "7 Term 1.2.0" --generate-notes
+```
