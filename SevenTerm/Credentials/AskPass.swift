@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import SevenTermCore
 
 /// 7 Term's own binary doubles as ssh's password helper (SSH_ASKPASS).
 ///
@@ -16,6 +17,15 @@ import Foundation
 /// Cancelling any of them exits with status 1, so ssh stops.
 /// Nothing is typed into the terminal, so a remote host can't fake a prompt
 /// and collect the password.
+///
+/// The environment alone isn't trusted: anything can set it. A stored
+/// password is only released when the helper's real parent is ssh and that
+/// ssh was started by this same 7 Term binary (directly, or through sftp);
+/// see AskPassCaller. When the parent is some other ssh (a jump host's, a
+/// child of the outer ssh), the host id and name are ignored and a password
+/// prompt goes to the dialog instead. When the parent isn't ssh at all, the
+/// helper exits with status 1 and shows nothing, so other programs can't use
+/// 7 Term's dialogs to ask for a password.
 enum AskPass {
     static let modeKey = "SEVENTERM_ASKPASS"
     static let hostKey = "SEVENTERM_HOST_ID"
@@ -40,10 +50,12 @@ enum AskPass {
     /// Runs the helper and returns the process exit status.
     @MainActor
     static func run(arguments: [String]) -> Int32 {
+        guard AskPassCaller.parentIsSSH() else { return 1 }
         let environment = ProcessInfo.processInfo.environment
         let prompt = arguments.dropFirst().joined(separator: " ")
-        let hostID = environment[hostKey] ?? ""
-        let hostName = environment[hostNameKey] ?? "this host"
+        let trusted = AskPassCaller.currentProcessIsTrusted()
+        let hostID = trusted ? environment[hostKey] ?? "" : ""
+        let hostName = trusted ? environment[hostNameKey] ?? "this host" : "this host"
         let lowered = prompt.lowercased()
 
         // A host with a Keychain password: Touch ID, then the stored one.

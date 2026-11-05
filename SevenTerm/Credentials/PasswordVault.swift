@@ -6,7 +6,10 @@ import Security
 /// Keychain (service "com.networkitout.seventerm.ssh-password", account =
 /// host id). Only 7 Term's own signed binary can read them without a
 /// Keychain prompt, and 7 Term asks for Touch ID (or your Mac password)
-/// before every read.
+/// before every read it makes. Touch ID is 7 Term's check, not the
+/// Keychain's: an app the user once let read the item ("Always Allow")
+/// reads it without one. (Item access control with .userPresence needs the
+/// data protection keychain, and so an entitlement that ad hoc builds lack.)
 ///
 /// The passwords never touch the host database, the backup, or the logs.
 enum PasswordVault {

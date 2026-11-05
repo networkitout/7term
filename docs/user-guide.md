@@ -133,7 +133,7 @@ ssh works as it does in Terminal: your agent, then the keys and settings in `~/.
 Choose a private key (not the `.pub` file). Only that key is offered to the server, which avoids "too many authentication failures" when your agent holds many keys. If the key has a passphrase, 7 Term asks for it in a dialog.
 
 **Password in Keychain**
-Type the password once; it's saved in your login Keychain. Each time 7 Term connects, it asks for **Touch ID** (or your Mac password) and hands the password to ssh directly. The password never appears in the terminal, the host list, backups or logs. That also means a server can't trick you into typing it with a fake prompt. A wrong stored password fails after one try instead of asking again and again. Edit the host to replace it.
+Type the password once; it's saved in your login Keychain. Each time 7 Term connects, it asks for **Touch ID** (or your Mac password) and hands the password to ssh directly. The password never appears in the terminal, the host list, backups or logs. That also means a server can't trick you into typing it with a fake prompt. A wrong stored password fails after one try instead of asking again and again. Edit the host to replace it. Only the ssh that 7 Term starts for that host gets it: a jump host (ProxyJump) asking for a password gets a dialog to type into instead.
 
 **Other prompts.** When ssh needs an answer, 7 Term shows it in a dialog with ssh's exact wording. This happens in the file browser, and for hosts set to use the Keychain. It covers a new host key (only **Continue** accepts it), a one-time code, or a key passphrase. In ordinary terminal tabs these prompts appear in the terminal as usual.
 
