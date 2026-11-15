@@ -164,4 +164,58 @@ import Testing
         #expect(reopened.map(\.parentId) == [nil])
         #expect(try second.entries().first?.host.folderId == folder.id)
     }
+
+    @Test func saveKeepsFolder() throws {
+        let library = try HostLibrary.inMemory()
+        let folder = try library.createFolder(name: "Work", parentId: nil)
+        var draft = HostDraft()
+        draft.name = "h1"
+        draft.hostname = "h1.lab"
+        draft.folderId = folder.id
+        let saved = try library.save(draft)
+        #expect(saved.host.folderId == folder.id)
+
+        var edit = HostDraft(entry: saved)
+        #expect(edit.folderId == folder.id)
+        edit.name = "h1 renamed"
+        let edited = try library.save(edit, id: saved.id)
+        #expect(edited.host.folderId == folder.id)
+        #expect(try library.entries().first?.host.folderId == folder.id)
+    }
+
+    @Test func saveSerialKeepsFolder() throws {
+        let library = try HostLibrary.inMemory()
+        let folder = try library.createFolder(name: "Work", parentId: nil)
+        var draft = HostDraft()
+        draft.name = "console"
+        draft.kind = .serial
+        draft.serialPath = "/dev/cu.usbserial-1"
+        draft.folderId = folder.id
+        let saved = try library.save(draft)
+        #expect(saved.host.folderId == folder.id)
+
+        var edit = HostDraft(entry: saved)
+        edit.name = "console 2"
+        let edited = try library.save(edit, id: saved.id)
+        #expect(edited.host.folderId == folder.id)
+    }
+
+    @Test func saveWithUnknownFolderGoesToTopLevel() throws {
+        let library = try HostLibrary.inMemory()
+        var draft = HostDraft()
+        draft.name = "h1"
+        draft.hostname = "h1.lab"
+        draft.folderId = "nope"
+        let saved = try library.save(draft)
+        #expect(saved.host.folderId == nil)
+    }
+
+    @Test func duplicateStaysInFolder() throws {
+        let library = try HostLibrary.inMemory()
+        let folder = try library.createFolder(name: "Work", parentId: nil)
+        let id = try savedHost(library, "h1")
+        try library.moveHost(id: id, toFolder: folder.id)
+        let copy = try #require(try library.duplicate(id: id))
+        #expect(copy.host.folderId == folder.id)
+    }
 }

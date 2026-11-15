@@ -150,6 +150,7 @@ public final class HostLibrary: Sendable {
             host.identityFile = draft.authMethod == .keyFile ? target.identityFile : nil
             host.kind = .ssh
             host.serial = nil
+            host.folderId = try Self.existingFolderId(draft.folderId, in: db)
             try host.save(db)
 
             try Self.replaceTags(of: host.id, with: tagNames, in: db)
@@ -179,6 +180,7 @@ public final class HostLibrary: Sendable {
             host.identityFile = nil
             host.kind = .serial
             host.serial = draft.serial
+            host.folderId = try Self.existingFolderId(draft.folderId, in: db)
             try host.save(db)
             try Self.replaceTags(of: host.id, with: tagNames, in: db)
             try Self.deleteUnusedTags(in: db)
@@ -247,6 +249,12 @@ public final class HostLibrary: Sendable {
             try Self.deleteUnusedTags(in: db)
             return added
         }
+    }
+
+    /// The id when it names a folder, otherwise nil (top level).
+    private static func existingFolderId(_ id: String?, in db: Database) throws -> String? {
+        guard let id, try HostFolder.fetchOne(db, key: id) != nil else { return nil }
+        return id
     }
 
     // MARK: Tags
