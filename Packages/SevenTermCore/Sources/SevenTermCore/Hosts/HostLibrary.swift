@@ -4,7 +4,7 @@ import GRDB
 /// The saved hosts and their tags, in SQLite through GRDB.
 /// Secrets never go in here; milestone 6 adds credential *references* only.
 public final class HostLibrary: Sendable {
-    private let database: any DatabaseWriter
+    let database: any DatabaseWriter
 
     public init(_ database: any DatabaseWriter) throws {
         self.database = database
@@ -70,6 +70,20 @@ public final class HostLibrary: Sendable {
             try db.alter(table: "host") { t in
                 t.add(column: "kind", .text).notNull().defaults(to: HostKind.ssh.rawValue)
                 t.add(column: "serial", .text)
+            }
+        }
+        migrator.registerMigration("v5-folders") { db in
+            try db.create(table: "folder") { t in
+                t.primaryKey("id", .text)
+                t.column("name", .text).notNull()
+                t.column("parentId", .text).indexed().references("folder", onDelete: .setNull)
+                t.column("createdAt", .datetime).notNull()
+                t.column("updatedAt", .datetime).notNull()
+            }
+            // Sibling names are unique ignoring case; IFNULL covers the top level.
+            try db.execute(sql: "CREATE UNIQUE INDEX folder_sibling_name ON folder(IFNULL(parentId, ''), name COLLATE NOCASE)")
+            try db.alter(table: "host") { t in
+                t.add(column: "folderId", .text).indexed().references("folder", onDelete: .setNull)
             }
         }
         return migrator
@@ -256,6 +270,20 @@ public final class HostLibrary: Sendable {
     }
 }
 
-public enum HostLibraryError: Error, Equatable {
+public enum HostLibraryError: Error, Equatable, LocalizedError {
     case invalidDraft
+    case invalidFolderName
+    case duplicateFolderName
+    case folderNotFound
+    case folderCycle
+
+    public var errorDescription: String? {
+        switch self {
+        case .invalidDraft: "That host can't be saved as it is."
+        case .invalidFolderName: "Folder names are 1 to 60 characters and can't contain \"/\"."
+        case .duplicateFolderName: "There's already a folder with that name here."
+        case .folderNotFound: "That folder no longer exists."
+        case .folderCycle: "A folder can't be moved into itself."
+        }
+    }
 }
