@@ -229,8 +229,9 @@ public final class HostLibrary: Sendable {
     /// ids, dates and tags. Existing hosts are never changed. Returns how
     /// many were added.
     @discardableResult
-    public func restore(_ hosts: [BackupSnapshot.Host]) throws -> Int {
+    public func restore(_ hosts: [BackupSnapshot.Host], folders: [BackupSnapshot.Folder] = []) throws -> Int {
         try database.write { db in
+            let folderMap = try Self.restoreFolders(folders, in: db)
             var added = 0
             for backup in hosts {
                 guard try SavedHost.fetchOne(db, key: backup.id) == nil else { continue }
@@ -242,13 +243,50 @@ public final class HostLibrary: Sendable {
                 draft.username = backup.username ?? ""
                 draft.name = backup.name
                 guard draft.isValid else { continue }
-                try backup.savedHost.insert(db)
+                var host = backup.savedHost
+                host.folderId = backup.folderId.flatMap { folderMap[$0] }
+                try host.insert(db)
                 try Self.replaceTags(of: backup.id, with: backup.tags, in: db)
                 added += 1
             }
             try Self.deleteUnusedTags(in: db)
             return added
         }
+    }
+
+    /// Adds the backup's folders that are missing, parents first, and returns
+    /// the id actually used for each backup folder id. A folder already in the
+    /// library maps to itself; one whose destination has a same-named sibling
+    /// (ignoring case) maps to that sibling; a parent found nowhere means the
+    /// top level.
+    private static func restoreFolders(_ backups: [BackupSnapshot.Folder], in db: Database) throws -> [String: String] {
+        let byId = Dictionary(backups.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var map: [String: String] = [:]
+        var visiting: Set<String> = []
+
+        func resolve(_ id: String) throws -> String? {
+            if let done = map[id] { return done }
+            if try HostFolder.fetchOne(db, key: id) != nil {
+                map[id] = id
+                return id
+            }
+            guard let backup = byId[id], visiting.insert(id).inserted else { return nil }
+            defer { visiting.remove(id) }
+            guard let name = HostFolder.cleanName(backup.name) else { return nil }
+            let parent = try backup.parentId.flatMap { try resolve($0) }
+            if let sibling = try HostFolder
+                .filter(Column("parentId") == parent && Column("name").collating(.nocase) == name)
+                .fetchOne(db) {
+                map[id] = sibling.id
+                return sibling.id
+            }
+            try HostFolder(id: id, name: name, parentId: parent, createdAt: backup.createdAt, updatedAt: backup.updatedAt).insert(db)
+            map[id] = id
+            return id
+        }
+
+        for backup in backups { _ = try resolve(backup.id) }
+        return map
     }
 
     /// The id when it names a folder, otherwise nil (top level).
