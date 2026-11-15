@@ -5,7 +5,7 @@ import FoundationXML
 import Yams
 
 // Each importer reads only what 7 Term saves: name, host, port, user,
-// folders or groups (as tags) and a key path. Stored passwords are never
+// folders or groups  and a key path. Stored passwords are never
 // read, even when the format contains them (FileZilla, some PuTTY forks).
 
 // MARK: - SecureCRT
@@ -56,7 +56,7 @@ public enum SecureCRTImport {
                 host: host,
                 port: port == 22 ? nil : port,
                 user: values["Username"].flatMap { $0.isEmpty ? nil : $0 },
-                tags: Array(components.dropLast()),
+                folder: Array(components.dropLast()),
                 keyFile: values["Identity Filename V2"].map { $0.components(separatedBy: "::").first ?? $0 }
             ))
         }
@@ -173,7 +173,7 @@ public enum MobaXtermImport {
             result.hosts.append(ImportedHost(
                 name: key, host: host, port: port == 22 ? nil : port,
                 user: fields[3].isEmpty ? nil : fields[3],
-                tags: folder,
+                folder: folder,
                 keyFile: fields.count > keyIndex ? fields[keyIndex] : nil
             ))
         }
@@ -268,7 +268,7 @@ public enum FileZillaImport {
             result.hosts.append(ImportedHost(
                 name: name, host: host, port: port == 22 ? nil : port,
                 user: fields["User"].flatMap { $0.isEmpty ? nil : $0 },
-                tags: folders.filter { !$0.isEmpty },
+                folder: folders.filter { !$0.isEmpty },
                 keyFile: fields["Keyfile"]
             ))
         }
@@ -586,7 +586,7 @@ public enum RoyalTSImport {
             result.hosts.append(ImportedHost(
                 name: name, host: host, port: port == 22 ? nil : port,
                 user: object.fields["CredentialUsername"].flatMap { $0.isEmpty ? nil : $0 },
-                tags: path,
+                folder: path,
                 keyFile: object.fields["CredentialKeyFile"]
             ))
         }

@@ -2,7 +2,7 @@ import Foundation
 
 /// What a spreadsheet column holds.
 public enum HostImportColumn: String, CaseIterable, Sendable {
-    case ignore, name, host, port, user, tags, keyFile
+    case ignore, name, host, port, user, tags, folder, keyFile
 
     public var title: String {
         switch self {
@@ -12,6 +12,7 @@ public enum HostImportColumn: String, CaseIterable, Sendable {
         case .port: "Port"
         case .user: "User"
         case .tags: "Tags"
+        case .folder: "Folder"
         case .keyFile: "Key file"
         }
     }
@@ -23,7 +24,8 @@ public enum HostImportColumn: String, CaseIterable, Sendable {
         .host: ["host", "hostname", "ip", "ipaddress", "address", "dns", "dnsname", "fqdn", "addr"],
         .port: ["port", "sshport"],
         .user: ["user", "username", "login", "account", "sshuser"],
-        .tags: ["tags", "tag", "group", "groups", "folder", "folders", "category", "labels", "role", "environment", "env"],
+        .tags: ["tags", "tag", "group", "groups", "category", "labels", "role", "environment", "env"],
+        .folder: ["folder", "folders", "path"],
         .keyFile: ["key", "keyfile", "identity", "identityfile", "privatekey", "sshkey"],
     ]
 
@@ -147,6 +149,8 @@ public struct HostImportTable: Equatable, Sendable {
             }
             draft.tags = tags.filter { !$0.isEmpty }.joined(separator: ", ")
 
+            let folderPath = Self.folderPath(from: value(.folder))
+
             let key = value(.keyFile)
             if !key.isEmpty {
                 draft.authMethod = .keyFile
@@ -168,8 +172,16 @@ public struct HostImportTable: Equatable, Sendable {
             }
             return HostImportCandidate(
                 line: line, draft: draft, problems: problems,
-                existingID: existingID, duplicateOfLine: duplicateLine)
+                existingID: existingID, duplicateOfLine: duplicateLine, folderPath: folderPath)
         }
+    }
+
+    /// "Work/Core" or "Work\\Core" as ["Work", "Core"]: parts trimmed, empty
+    /// ones dropped, each cut to the 60-character folder name limit.
+    public static func folderPath(from cell: String) -> [String] {
+        cell.split(whereSeparator: { $0 == "/" || $0 == "\\" })
+            .map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(60)) }
+            .filter { !$0.isEmpty }
     }
 
     /// Host, port and user decide whether two entries are the same machine.
@@ -293,13 +305,16 @@ public struct HostImportCandidate: Identifiable, Equatable, Sendable {
     /// The saved host with the same host, port and user, if any.
     public var existingID: String?
     public var duplicateOfLine: Int?
+    /// The folder a new host goes in, outermost first; empty is the top level.
+    public var folderPath: [String] = []
 
     public var isImportable: Bool { problems.isEmpty }
 }
 
 extension HostLibrary {
     /// Saves the importable candidates. Rows matching a saved host are
-    /// skipped, or with `updateExisting` merged into it: the row's non-empty
+    /// skipped, or with `updateExisting` merged into it (never moved to a
+    /// folder; new hosts go in the row's folder, created when missing): the row's non-empty
     /// fields win and tags are added, never removed. Auth settings that
     /// aren't in the row (a Keychain password, logging) stay as they were.
     public func importHosts(
@@ -325,7 +340,9 @@ extension HostLibrary {
                 _ = try save(merged, id: id, now: now)
                 updated += 1
             } else {
-                _ = try save(candidate.draft, now: now)
+                var draft = candidate.draft
+                draft.folderId = try ensureFolder(path: candidate.folderPath, now: now)
+                _ = try save(draft, now: now)
                 added += 1
             }
         }

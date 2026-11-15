@@ -136,4 +136,52 @@ import Testing
         #expect(entry.tags.sorted() == ["lab", "proxmox"])
         #expect(entry.host.logByDefault) // untouched
     }
+
+    @Test func folderColumnIsRecognised() {
+        let table = HostImportTable.parse("Name,Host,Folder\nweb,10.0.0.1,Work/Core\n")
+        #expect(table.columns == [.name, .host, .folder])
+        #expect(HostImportTable.parse("Name,Host,Path\nweb,10.0.0.1,Work\n").columns == [.name, .host, .folder])
+        #expect(table.candidates(existing: [])[0].folderPath == ["Work", "Core"])
+    }
+
+    @Test func folderPathParsing() {
+        #expect(HostImportTable.folderPath(from: " Work //Core\\Edge/ ") == ["Work", "Core", "Edge"])
+        let long = String(repeating: "a", count: 70)
+        #expect(HostImportTable.folderPath(from: "x/\(long)") == ["x", String(repeating: "a", count: 60)])
+        #expect(HostImportTable.folderPath(from: "").isEmpty)
+    }
+
+    @Test func importCreatesAndReusesFolders() throws {
+        let library = try HostLibrary.inMemory()
+        let work = try #require(try library.ensureFolder(path: ["work"]))
+        let table = HostImportTable.parse("""
+            name,host,folder
+            a,10.0.0.1,Work/Core
+            b,10.0.0.2,Work/Core
+            """)
+        let result = try library.importHosts(table.candidates(existing: []), updateExisting: false)
+        #expect(result.added == 2)
+        let folders = try library.folders()
+        #expect(folders.count == 2)
+        #expect(folders.map(\.name).sorted() == ["Core", "work"])
+        let core = try #require(folders.first { $0.name == "Core" })
+        #expect(core.parentId == work)
+        #expect(try library.entries().allSatisfy { $0.host.folderId == core.id })
+    }
+
+    @Test func importNeverMovesExistingHost() throws {
+        let library = try HostLibrary.inMemory()
+        var draft = HostDraft()
+        draft.name = "pve1"
+        draft.hostname = "192.168.1.10"
+        let saved = try library.save(draft)
+
+        let table = HostImportTable.parse("name,host,folder\nPVE One,192.168.1.10,Work\n")
+        let candidates = table.candidates(existing: try library.entries())
+        let result = try library.importHosts(candidates, updateExisting: true)
+        #expect(result.updated == 1)
+        let entry = try #require(try library.entries().first { $0.id == saved.id })
+        #expect(entry.host.folderId == nil)
+        #expect(try library.folders().isEmpty)
+    }
 }
