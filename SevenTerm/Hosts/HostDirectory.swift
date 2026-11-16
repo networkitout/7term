@@ -246,6 +246,7 @@ final class HostDirectory {
         guard let library else { return errorMessage ?? "The host library isn't available." }
         do {
             try library.createFolder(name: name, parentId: parentId)
+            errorMessage = nil
             if let parentId { expandedFolderIDs.insert(parentId) }
             reload()
             return nil
@@ -260,6 +261,7 @@ final class HostDirectory {
         guard let library else { return errorMessage ?? "The host library isn't available." }
         do {
             try library.renameFolder(id: folder.id, to: name)
+            errorMessage = nil
             reload()
             return nil
         } catch {
@@ -275,10 +277,13 @@ final class HostDirectory {
     }
 
     /// Moves a host or a folder, by id, into a folder or (nil) the top level.
+    /// Dropping an item where it already is, or a folder onto itself, does nothing.
     func move(itemID: String, toFolder folderID: String?) {
-        if folder(id: itemID) != nil {
+        if let moving = folder(id: itemID) {
+            guard itemID != folderID, moving.parentId != folderID else { return }
             perform("move the folder") { try $0.moveFolder(id: itemID, toParent: folderID) }
-        } else if entry(id: itemID) != nil {
+        } else if let moving = entry(id: itemID) {
+            guard moving.host.folderId != folderID else { return }
             perform("move the host") { try $0.moveHost(id: itemID, toFolder: folderID) }
         }
     }

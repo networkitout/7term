@@ -39,8 +39,11 @@ extension HostLibrary {
             guard var folder = try HostFolder.fetchOne(db, key: id) else { throw HostLibraryError.folderNotFound }
             try Self.requireFolder(parentId, in: db)
             // Walk up from the destination; meeting the moved folder is a cycle.
+            // An id seen twice means the destination already sits on a loop that
+            // doesn't include the moved folder, so the move adds no new cycle.
             var cursor = parentId
-            while let current = cursor {
+            var visited: Set<String> = []
+            while let current = cursor, visited.insert(current).inserted {
                 if current == id { throw HostLibraryError.folderCycle }
                 cursor = try HostFolder.fetchOne(db, key: current)?.parentId
             }
@@ -72,7 +75,8 @@ extension HostLibrary {
                 var candidate = child.name
                 var suffix = 2
                 while try Self.hasSibling(named: candidate, in: destination, excluding: child.id, db: db) {
-                    candidate = "\(child.name) \(suffix)"
+                    let tail = " \(suffix)"
+                    candidate = String(child.name.prefix(60 - tail.count)) + tail
                     suffix += 1
                 }
                 child.name = candidate

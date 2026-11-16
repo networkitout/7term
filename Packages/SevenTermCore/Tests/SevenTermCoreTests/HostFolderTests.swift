@@ -77,6 +77,19 @@ import Testing
         #expect(try library.folders().first { $0.id == c.id }?.parentId == nil)
     }
 
+    @Test func moveFolderIntoLoopedDestinationReturns() throws {
+        let library = try HostLibrary.inMemory()
+        let a = try library.createFolder(name: "A", parentId: nil)
+        let b = try library.createFolder(name: "B", parentId: nil)
+        let c = try library.createFolder(name: "C", parentId: nil)
+        try library.database.write { db in
+            try db.execute(sql: "UPDATE folder SET parentId = ? WHERE id = ?", arguments: [b.id, a.id])
+            try db.execute(sql: "UPDATE folder SET parentId = ? WHERE id = ?", arguments: [a.id, b.id])
+        }
+        try library.moveFolder(id: c.id, toParent: a.id)
+        #expect(try library.folders().first { $0.id == c.id }?.parentId == a.id)
+    }
+
     @Test func moveFolderIntoSiblingNameClashThrows() throws {
         let library = try HostLibrary.inMemory()
         let parent = try library.createFolder(name: "Parent", parentId: nil)
@@ -127,6 +140,22 @@ import Testing
         let folders = try library.folders()
         #expect(folders.map(\.name) == ["Lab", "Lab 2"])
         #expect(folders.allSatisfy { $0.parentId == nil })
+    }
+
+    @Test func deleteClashSuffixStaysWithinSixtyCharacters() throws {
+        let library = try HostLibrary.inMemory()
+        let name = String(repeating: "n", count: 60)
+        let top = try library.createFolder(name: name, parentId: nil)
+        let work = try library.createFolder(name: "Work", parentId: nil)
+        let inner = try library.createFolder(name: name, parentId: work.id)
+        try library.deleteFolder(id: work.id)
+        let folders = try library.folders()
+        #expect(folders.count == 2)
+        #expect(folders.first { $0.id == top.id }?.name == name)
+        let moved = try #require(folders.first { $0.id == inner.id })
+        #expect(moved.parentId == nil)
+        #expect(moved.name.hasSuffix(" 2"))
+        #expect(moved.name.count == 60)
     }
 
     @Test func ensureFolderReusesAndCreates() throws {
@@ -181,6 +210,23 @@ import Testing
         let edited = try library.save(edit, id: saved.id)
         #expect(edited.host.folderId == folder.id)
         #expect(try library.entries().first?.host.folderId == folder.id)
+    }
+
+    @Test func savingExistingHostWithNilFolderMovesItToTopLevel() throws {
+        let library = try HostLibrary.inMemory()
+        let folder = try library.createFolder(name: "Work", parentId: nil)
+        var draft = HostDraft()
+        draft.name = "h1"
+        draft.hostname = "h1.lab"
+        draft.folderId = folder.id
+        let saved = try library.save(draft)
+        #expect(saved.host.folderId == folder.id)
+
+        var edit = HostDraft(entry: saved)
+        edit.folderId = nil
+        let edited = try library.save(edit, id: saved.id)
+        #expect(edited.host.folderId == nil)
+        #expect(try library.entries().first { $0.id == saved.id }?.host.folderId == nil)
     }
 
     @Test func saveSerialKeepsFolder() throws {

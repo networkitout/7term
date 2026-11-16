@@ -140,7 +140,9 @@ import Testing
     @Test func folderColumnIsRecognised() {
         let table = HostImportTable.parse("Name,Host,Folder\nweb,10.0.0.1,Work/Core\n")
         #expect(table.columns == [.name, .host, .folder])
-        #expect(HostImportTable.parse("Name,Host,Path\nweb,10.0.0.1,Work\n").columns == [.name, .host, .folder])
+        #expect(HostImportTable.parse("Name,Host,Folders\nweb,10.0.0.1,Work\n").columns == [.name, .host, .folder])
+        // "Path" could be a key path, so it isn't read as a folder.
+        #expect(!HostImportTable.parse("Name,Host,Path\nweb,10.0.0.1,Work\n").columns.contains(.folder))
         #expect(table.candidates(existing: [])[0].folderPath == ["Work", "Core"])
     }
 

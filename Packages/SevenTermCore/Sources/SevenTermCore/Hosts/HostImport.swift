@@ -25,7 +25,7 @@ public enum HostImportColumn: String, CaseIterable, Sendable {
         .port: ["port", "sshport"],
         .user: ["user", "username", "login", "account", "sshuser"],
         .tags: ["tags", "tag", "group", "groups", "category", "labels", "role", "environment", "env"],
-        .folder: ["folder", "folders", "path"],
+        .folder: ["folder", "folders"],
         .keyFile: ["key", "keyfile", "identity", "identityfile", "privatekey", "sshkey"],
     ]
 

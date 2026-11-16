@@ -19,7 +19,8 @@ struct HostSidebar: View {
         .scrollContentBackground(.hidden)
         .background(chrome.panel)
         // A drop below the rows goes to the top level.
-        .dropDestination(for: String.self) { itemIDs, _ in
+        .dropDestination(for: String.self) { payloads, _ in
+            let itemIDs = SidebarDrag.itemIDs(in: payloads)
             for id in itemIDs { hosts.move(itemID: id, toFolder: nil) }
             return !itemIDs.isEmpty
         }
@@ -57,7 +58,7 @@ struct HostSidebar: View {
                 Button("Delete…", role: .destructive) { hosts.pendingDelete = entry }
             } else {
                 Button("New Host…") { hosts.editor = .new(folderID: hosts.folderForNewItems) }
-                Button("New Folder…") { hosts.folderNameRequest = .new(parentId: nil) }
+                Button("New Folder…") { hosts.folderNameRequest = .new(parentId: hosts.folderForNewItems) }
             }
         } primaryAction: { itemIDs in
             guard let id = itemIDs.first else { return }
@@ -217,11 +218,24 @@ struct HostSidebar: View {
                     Button("Import from a Spreadsheet or App…") { hosts.isSpreadsheetImportPresented = true }
                 }
             }
-        } else if hosts.tree.isEmpty && !hosts.entries.isEmpty {
+        } else if hosts.tree.isEmpty {
             ContentUnavailableView.search(text: hosts.query)
         }
     }
 
+}
+
+/// Sidebar drags carry a host or folder id behind a prefix, so plain text
+/// dropped from elsewhere isn't mistaken for an item.
+private enum SidebarDrag {
+    static let prefix = "7term-item:"
+
+    static func payload(for itemID: String) -> String { prefix + itemID }
+
+    /// The ids in the payloads that carry the prefix; others are ignored.
+    static func itemIDs(in payloads: [String]) -> [String] {
+        payloads.compactMap { $0.hasPrefix(prefix) ? String($0.dropFirst(prefix.count)) : nil }
+    }
 }
 
 /// One level of the tree; folders recurse into their children.
@@ -246,9 +260,10 @@ private struct HostTreeRows: View {
                     openSFTP: { sessions.open(entry, kind: .files) },
                     edit: { hosts.editor = .edit(entry) }
                 )
-                .draggable(entry.id)
+                .draggable(SidebarDrag.payload(for: entry.id))
                 // Dropping on a host means "next to it": into its folder.
-                .dropDestination(for: String.self) { itemIDs, _ in
+                .dropDestination(for: String.self) { payloads, _ in
+                    let itemIDs = SidebarDrag.itemIDs(in: payloads)
                     for id in itemIDs where id != entry.id {
                         hosts.move(itemID: id, toFolder: entry.host.folderId)
                     }
@@ -296,10 +311,11 @@ private struct FolderRow: View {
             RoundedRectangle(cornerRadius: 4)
                 .fill(isTargeted ? chrome.accent.opacity(0.2) : .clear)
         )
-        .draggable(folder.id)
-        // Dropping a folder on itself or its own subfolder is refused by
-        // the library, and the reason shows under the list.
-        .dropDestination(for: String.self) { itemIDs, _ in
+        .draggable(SidebarDrag.payload(for: folder.id))
+        // Dropping a folder on itself does nothing; dropping it on its own
+        // subfolder is refused by the library, and the reason shows under the list.
+        .dropDestination(for: String.self) { payloads, _ in
+            let itemIDs = SidebarDrag.itemIDs(in: payloads)
             for id in itemIDs { hosts.move(itemID: id, toFolder: folder.id) }
             return !itemIDs.isEmpty
         } isTargeted: { isTargeted = $0 }

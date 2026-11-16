@@ -100,6 +100,8 @@ Migration `v5-folders`:
 - Unique index `folder_sibling_name`: `CREATE UNIQUE INDEX folder_sibling_name ON folder(IFNULL(parentId, ''), name COLLATE NOCASE)`. SQLite treats nulls as distinct in a unique index, so `IFNULL(parentId, '')` makes top-level names unique in the database itself.
 - Column `host.folderId` text null, referencing `folder`, set to null if the folder goes.
 
+Sibling names are compared with SQLite's `NOCASE`, which folds ASCII letters only, so "Étude" and "étude" are different names; the Windows app must use the same rule.
+
 Deleting a folder is done in code inside one transaction: re-parent its hosts and subfolders to its parent, then delete the row. The foreign key rules are a safety net, not the mechanism.
 
 ## Where the work lands

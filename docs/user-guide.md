@@ -57,7 +57,7 @@ The line under the left column shows the exact ssh command 7 Term will run. **Te
 
 Folders group hosts by site, customer or lab. A host is in one folder, or at the top level. Folders can hold other folders. Each level lists folders first, then hosts, both by name. Tags stay as they are, for labels that cut across folders.
 
-- **Create:** **Host ▸ New Folder…** (⇧⌘N), or right-click in the list ▸ **New Folder…**. The folder is made inside the selected folder, or beside the selected host. Folder names are 1 to 60 characters, can't contain `/`, and must differ from their neighbours, ignoring case.
+- **Create:** right-click a folder ▸ **New Folder…** to make one inside it. **Host ▸ New Folder…** (⇧⌘N), or right-clicking the empty area of the list ▸ **New Folder…**, makes it inside the selected folder, or beside the selected host. Folder names are 1 to 60 characters, can't contain `/`, and must differ from their neighbours, ignoring case.
 - **Rename:** right-click a folder ▸ **Rename…**.
 - **Open and close:** click the arrow beside a folder. 7 Term remembers which folders are open on this Mac only. They aren't part of a backup.
 - **Move:** drag a host or folder onto a folder, or onto a host to put it in that host's folder. Drop it on the empty area of the list for the top level. Or right-click ▸ **Move to**, or use the **Folder** menu in the host form. A folder can't go into itself or anything inside it.
