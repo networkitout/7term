@@ -6,17 +6,23 @@ public struct ImportedHost: Equatable, Sendable {
     public var host: String
     public var port: Int?
     public var user: String?
-    /// Folders or groups in the other app, outermost first.
+    /// Groups in the other app (Ansible, Tabby), kept as tags.
     public var tags: [String]
+    /// Folders in the other app, outermost first. A `/` or `\` in a name
+    /// becomes `-` so it isn't read as a level.
+    public var folder: [String]
     /// Only kept when it's a Mac path (a Windows path is no use here).
     public var keyFile: String?
 
-    public init(name: String, host: String, port: Int? = nil, user: String? = nil, tags: [String] = [], keyFile: String? = nil) {
+    public init(name: String, host: String, port: Int? = nil, user: String? = nil, tags: [String] = [], folder: [String] = [], keyFile: String? = nil) {
         self.name = name
         self.host = host
         self.port = port
         self.user = user
         self.tags = tags
+        self.folder = folder.map {
+            $0.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: "\\", with: "-")
+        }
         self.keyFile = Self.usableKeyPath(keyFile)
     }
 
@@ -45,12 +51,12 @@ public struct ForeignImportResult: Equatable, Sendable {
     /// column for them.
     public var table: HostImportTable {
         HostImportTable(
-            header: ["Name", "Host", "Port", "User", "Tags", "Key file"],
+            header: ["Name", "Host", "Port", "User", "Tags", "Folder", "Key file"],
             rows: hosts.map { host in
                 [host.name, host.host, host.port.map(String.init) ?? "", host.user ?? "",
-                 host.tags.joined(separator: ";"), host.keyFile ?? ""]
+                 host.tags.joined(separator: ";"), host.folder.joined(separator: "/"), host.keyFile ?? ""]
             },
-            columns: [.name, .host, .port, .user, .tags, .keyFile],
+            columns: [.name, .host, .port, .user, .tags, .folder, .keyFile],
             secretColumns: [],
             lineNumbers: Array(stride(from: 1, through: hosts.count, by: 1))
         )
@@ -77,7 +83,7 @@ public enum ForeignImportFormat: String, CaseIterable, Sendable {
     public var hint: String {
         switch self {
         case .royalTS:
-            "Your Royal TSX document (.rtsz). SSH connections are imported; folders become tags."
+            "Your Royal TSX document (.rtsz). SSH connections are imported; folders are kept."
         case .secureCRT:
             "Choose SecureCRT's Sessions folder: ~/Library/Application Support/VanDyke/SecureCRT/Config/Sessions (or Config/Sessions on Windows)."
         case .putty:

@@ -53,6 +53,8 @@ public struct SavedHost: Codable, Hashable, Sendable, Identifiable {
     public var kind: HostKind
     /// Set for serial entries.
     public var serial: SerialHostDetails?
+    /// The folder this host sits in; nil is the top level.
+    public var folderId: String?
     public var createdAt: Date
     public var updatedAt: Date
 
@@ -68,6 +70,7 @@ public struct SavedHost: Codable, Hashable, Sendable, Identifiable {
         identityFile: String? = nil,
         kind: HostKind = .ssh,
         serial: SerialHostDetails? = nil,
+        folderId: String? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -82,6 +85,7 @@ public struct SavedHost: Codable, Hashable, Sendable, Identifiable {
         self.identityFile = identityFile
         self.kind = kind
         self.serial = serial
+        self.folderId = folderId
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }

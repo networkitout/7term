@@ -17,6 +17,8 @@ public struct BackupSnapshot: Codable, Equatable, Sendable {
         /// Missing in backups from before serial support: those are ssh.
         public var kind: HostKind?
         public var serial: SerialHostDetails?
+        /// The folder the host was in; missing in format 1 backups.
+        public var folderId: String?
         public var createdAt: Date
         public var updatedAt: Date
 
@@ -32,6 +34,7 @@ public struct BackupSnapshot: Codable, Equatable, Sendable {
             identityFile = entry.host.identityFile
             kind = entry.host.kind
             serial = entry.host.serial
+            folderId = entry.host.folderId
             createdAt = entry.host.createdAt
             updatedAt = entry.host.updatedAt
         }
@@ -40,9 +43,25 @@ public struct BackupSnapshot: Codable, Equatable, Sendable {
             SavedHost(
                 id: id, name: name, hostname: hostname, port: port, username: username,
                 logByDefault: logByDefault, authMethod: authMethod, identityFile: identityFile,
-                kind: kind ?? .ssh, serial: serial,
+                kind: kind ?? .ssh, serial: serial, folderId: folderId,
                 createdAt: createdAt, updatedAt: updatedAt
             )
+        }
+    }
+
+    public struct Folder: Codable, Equatable, Sendable {
+        public var id: String
+        public var name: String
+        public var parentId: String?
+        public var createdAt: Date
+        public var updatedAt: Date
+
+        public init(_ folder: HostFolder) {
+            id = folder.id
+            name = folder.name
+            parentId = folder.parentId
+            createdAt = folder.createdAt
+            updatedAt = folder.updatedAt
         }
     }
 
@@ -58,12 +77,14 @@ public struct BackupSnapshot: Codable, Equatable, Sendable {
         }
     }
 
-    public static let currentFormat = 1
+    public static let currentFormat = 2
 
     public var formatVersion: Int
     public var exportedAt: Date
     public var appVersion: String
     public var hosts: [Host]
+    /// nil when read from a format 1 backup.
+    public var folders: [Folder]?
     public var settings: Settings
     public var importedPalettes: [TerminalPalette]
 
@@ -71,6 +92,7 @@ public struct BackupSnapshot: Codable, Equatable, Sendable {
         exportedAt: Date = Date(),
         appVersion: String,
         hosts: [HostEntry],
+        folders: [HostFolder],
         settings: Settings,
         importedPalettes: [TerminalPalette]
     ) {
@@ -78,6 +100,7 @@ public struct BackupSnapshot: Codable, Equatable, Sendable {
         self.exportedAt = exportedAt
         self.appVersion = appVersion
         self.hosts = hosts.map(Host.init(entry:))
+        self.folders = folders.map(Folder.init)
         self.settings = settings
         self.importedPalettes = importedPalettes
     }

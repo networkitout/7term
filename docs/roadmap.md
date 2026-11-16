@@ -26,6 +26,7 @@ All 13 milestones are done; 1.2.0 is the first public release.
 | 11 | Serial console ([design](serial.md)) | Done. Tested with a Flipper Zero; Send Break still to try on network gear |
 | 12 | Import from other tools | Done: Royal TSX, SecureCRT, PuTTY/KiTTY, MobaXterm, FileZilla, Ansible inventory (INI/YAML), Tabby. Royal TSX checked against a real document |
 | 13 | Release | Done: MIT license, Sparkle updates, `tools/release.sh` (Developer ID signing, notarization, signed DMG, appcast, GitHub release). See [releasing.md](releasing.md) |
+| 14 | Folders for hosts, Open All ([design](folders.md)) | Done |
 
 ### Decided against
 

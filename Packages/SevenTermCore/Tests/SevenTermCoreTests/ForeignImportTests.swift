@@ -32,7 +32,8 @@ import Testing
         #expect(sw?.host == "10.0.0.1")
         #expect(sw?.user == "admin")
         #expect(sw?.port == nil) // 22 is the default
-        #expect(sw?.tags == ["Network", "Core"])
+        #expect(sw?.folder == ["Network", "Core"])
+        #expect(sw?.tags == [])
         #expect(sw?.keyFile == "/Users/me/.ssh/id_lab")
         #expect(result.hosts.first { $0.name == "pve1" }?.port == 2222)
         #expect(result.skipped == ["old-router: Telnet session"])
@@ -96,10 +97,12 @@ import Testing
             """
         let result = MobaXtermImport.parse(moba)
         #expect(result.hosts.map(\.name) == ["pve1", "dockerdev", "files"])
+        #expect(result.hosts[0].folder == [])
         #expect(result.hosts[0].tags == [])
         #expect(result.hosts[0].keyFile == nil) // _CurrentDrive_ is Windows
         #expect(result.hosts[1].port == 2222)
-        #expect(result.hosts[1].tags == ["Lab", "Docker"])
+        #expect(result.hosts[1].folder == ["Lab", "Docker"])
+        #expect(result.hosts[1].tags == [])
         #expect(result.skipped == ["desktop: RDP session"])
     }
 
@@ -125,7 +128,7 @@ import Testing
         #expect(ForeignImportFormat.detect(fileName: "sitemanager.xml", text: xml) == .fileZilla)
         let result = try FileZillaImport.parse(xml)
         #expect(result.hosts.count == 2)
-        #expect(result.hosts[0] == ImportedHost(name: "pve1", host: "10.0.0.10", user: "root", tags: ["Lab"], keyFile: "/Users/me/.ssh/id_lab"))
+        #expect(result.hosts[0] == ImportedHost(name: "pve1", host: "10.0.0.10", user: "root", folder: ["Lab"], keyFile: "/Users/me/.ssh/id_lab"))
         #expect(result.hosts[1] == ImportedHost(name: "NAS", host: "nas.lab", port: 2200, user: "admin"))
         #expect(result.skipped == ["web ftp: FTP site (only SFTP is imported)"])
         #expect(!String(describing: result).contains("hunter2"))
@@ -259,9 +262,9 @@ import Testing
         #expect(ForeignImportFormat.detect(fileName: "Lab.rtsz", text: xml) == .royalTS)
         let result = try RoyalTSImport.parse(String(xml.drop { $0 == "\u{FEFF}" }))
         #expect(result.hosts == [
-            ImportedHost(name: "pve1", host: "10.9.9.9", port: 2222, user: "root", tags: ["Proxmox", "Nodes"]),
+            ImportedHost(name: "pve1", host: "10.9.9.9", port: 2222, user: "root", folder: ["Proxmox", "Nodes"]),
             ImportedHost(name: "Terminal", host: "192.168.1.20"),
-            ImportedHost(name: "sftp box", host: "10.0.0.5", tags: ["Proxmox"]),
+            ImportedHost(name: "sftp box", host: "10.0.0.5", folder: ["Proxmox"]),
         ])
         #expect(result.skipped == [
             "old switch: telnet connection",
@@ -270,6 +273,21 @@ import Testing
         ])
         #expect(!String(describing: result).contains("hunter2"))
         #expect(throws: (any Error).self) { try RoyalTSImport.parse("<html></html>") }
+    }
+
+    @Test func folderNameWithSlashIsCleaned() throws {
+        let moba = MobaXtermImport.parse("[Bookmarks_1]\nSubRep=DC/East\\Rack 1\nbox=#109#0%10.0.0.1%22%root%%-1#x#0# #-1\n")
+        #expect(moba.hosts.first?.folder == ["DC-East", "Rack 1"])
+
+        let xml = """
+            <FileZilla3><Servers>
+              <Folder>DC/East
+                <Server><Host>10.0.0.10</Host><Port>22</Port><Protocol>1</Protocol><Name>pve1</Name></Server>
+              </Folder>
+            </Servers></FileZilla3>
+            """
+        let zilla = try FileZillaImport.parse(xml)
+        #expect(zilla.hosts[0].folder == ["DC-East"])
     }
 
     @Test func resultsGoThroughTheUsualChecks() throws {

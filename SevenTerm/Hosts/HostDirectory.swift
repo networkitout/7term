@@ -5,7 +5,7 @@ import SevenTermCore
 
 /// What the host sheet is editing.
 enum HostEditorRequest: Identifiable {
-    case new
+    case new(folderID: String?)
     case edit(HostEntry)
 
     var id: String {
@@ -21,6 +21,27 @@ enum HostEditorRequest: Identifiable {
         case .edit(let entry): entry
         }
     }
+
+    /// The folder a new host starts in; nil for the top level or an edit.
+    var folderID: String? {
+        switch self {
+        case .new(let folderID): folderID
+        case .edit: nil
+        }
+    }
+}
+
+/// What the folder name sheet is for.
+enum FolderNameRequest: Identifiable {
+    case new(parentId: String?)
+    case rename(HostFolder)
+
+    var id: String {
+        switch self {
+        case .new(let parentId): "new-\(parentId ?? "")"
+        case .rename(let folder): "rename-\(folder.id)"
+        }
+    }
 }
 
 /// The app's view of the saved host library: the entries, the filter text,
@@ -29,15 +50,32 @@ enum HostEditorRequest: Identifiable {
 @Observable
 final class HostDirectory {
     private(set) var entries: [HostEntry] = []
+    private(set) var folders: [HostFolder] = []
     private(set) var errorMessage: String?
     var query = ""
     var editor: HostEditorRequest?
-    /// The selected host in the sidebar.
-    var selectedHostID: String?
+    /// The selected row in the sidebar: a host's or a folder's id.
+    var selectedID: String?
     /// Show only hosts with this tag; nil shows all.
     var tagFilter: String?
     /// A host waiting for the delete confirmation.
     var pendingDelete: HostEntry?
+    /// The folder name sheet, when open.
+    var folderNameRequest: FolderNameRequest?
+    /// A folder waiting for the delete confirmation.
+    var pendingFolderDelete: HostFolder?
+    /// Hosts waiting for the Open All confirmation, and the folder they came from.
+    var pendingOpenAll: [HostEntry]?
+    var pendingOpenAllFolderName: String?
+    /// Opening more tabs than this at once asks first.
+    static let openAllConfirmThreshold = 10
+    /// Open folders in the sidebar. Kept on this Mac only.
+    var expandedFolderIDs: Set<String> {
+        didSet {
+            guard expandedFolderIDs != oldValue else { return }
+            UserDefaults.standard.set(Array(expandedFolderIDs).sorted(), forKey: Self.expandedFoldersKey)
+        }
+    }
     var isImportPresented = false
     /// The spreadsheet (CSV or pasted cells) import sheet.
     var isSpreadsheetImportPresented = false
@@ -47,8 +85,10 @@ final class HostDirectory {
     /// Called after the host list changes; the backup uses it.
     @ObservationIgnored var onChange: (() -> Void)?
     private static let didOfferImportKey = "didOfferSSHConfigImport"
+    private static let expandedFoldersKey = "expandedFolders"
 
     init() {
+        expandedFolderIDs = Set(UserDefaults.standard.stringArray(forKey: Self.expandedFoldersKey) ?? [])
         do {
             library = try HostLibrary.onDisk(at: Self.libraryURL)
         } catch {
@@ -65,9 +105,55 @@ final class HostDirectory {
             .appending(path: "hosts.sqlite", directoryHint: .notDirectory)
     }
 
-    /// What the sidebar shows: each host once, in name order.
-    var visibleEntries: [HostEntry] {
-        HostFilter.filter(entries, query: query, tag: tagFilter)
+    /// True while the filter text or a tag narrows the sidebar.
+    var isFiltering: Bool {
+        !query.isEmpty || tagFilter != nil
+    }
+
+    /// What the sidebar shows: folders first, then hosts, at each level.
+    /// While filtering, only matching hosts and the folders that hold them.
+    var tree: [HostTreeNode] {
+        if isFiltering {
+            HostTree.filtered(folders: folders, entries: entries, query: query, tag: tagFilter)
+        } else {
+            HostTree.build(folders: folders, entries: entries)
+        }
+    }
+
+    /// Every folder is open while filtering, so matches are never hidden.
+    func isExpanded(_ folderID: String) -> Bool {
+        isFiltering || expandedFolderIDs.contains(folderID)
+    }
+
+    func folder(id: String) -> HostFolder? {
+        folders.first { $0.id == id }
+    }
+
+    var selectedFolder: HostFolder? {
+        selectedID.flatMap(folder(id:))
+    }
+
+    /// Where a new folder (or host) goes: the selected folder, or the
+    /// folder of the selected host.
+    var folderForNewItems: String? {
+        selectedFolder?.id ?? selectedEntry?.host.folderId
+    }
+
+    /// Hosts under a folder, subfolders included, as the sidebar shows them.
+    func hosts(in folder: HostFolder) -> [HostEntry] {
+        HostTree.hosts(in: folder.id, nodes: tree)
+    }
+
+    /// Opens every host under a folder, or asks first when there are many.
+    func requestOpenAll(in folder: HostFolder, open: ([HostEntry]) -> Void) {
+        let entries = hosts(in: folder)
+        guard !entries.isEmpty else { return }
+        if entries.count > Self.openAllConfirmThreshold {
+            pendingOpenAll = entries
+            pendingOpenAllFolderName = folder.name
+        } else {
+            open(entries)
+        }
     }
 
     var allTags: [String] {
@@ -79,13 +165,18 @@ final class HostDirectory {
     }
 
     var selectedEntry: HostEntry? {
-        selectedHostID.flatMap(entry(id:))
+        selectedID.flatMap(entry(id:))
     }
 
     func reload() {
         guard let library else { return }
         do {
             entries = try library.entries()
+            folders = try library.folders()
+            let folderIDs = Set(folders.map(\.id))
+            if !expandedFolderIDs.isSubset(of: folderIDs) {
+                expandedFolderIDs.formIntersection(folderIDs)
+            }
             // Drop a tag filter whose last host was deleted or retagged.
             if let tagFilter, !allTags.contains(where: { $0.caseInsensitiveCompare(tagFilter) == .orderedSame }) {
                 self.tagFilter = nil
@@ -107,10 +198,11 @@ final class HostDirectory {
 
     // MARK: Editing
 
-    /// Adds backed-up hosts that aren't here yet. Returns how many were added.
-    func restore(_ backup: [BackupSnapshot.Host]) throws -> Int {
+    /// Adds backed-up hosts and folders that aren't here yet. Returns how
+    /// many hosts were added.
+    func restore(_ backup: [BackupSnapshot.Host], folders: [BackupSnapshot.Folder]) throws -> Int {
         guard let library else { return 0 }
-        let added = try library.restore(backup)
+        let added = try library.restore(backup, folders: folders)
         reload()
         return added
     }
@@ -144,6 +236,56 @@ final class HostDirectory {
     func delete(_ entry: HostEntry) {
         perform("delete") { try $0.delete(id: entry.id) }
         PasswordVault.delete(hostID: entry.id)
+    }
+
+    // MARK: Folders
+
+    /// Creates a folder and opens its parent so it shows. Returns an error
+    /// message for the sheet, or nil on success.
+    func createFolder(name: String, parentId: String?) -> String? {
+        guard let library else { return errorMessage ?? "The host library isn't available." }
+        do {
+            try library.createFolder(name: name, parentId: parentId)
+            errorMessage = nil
+            if let parentId { expandedFolderIDs.insert(parentId) }
+            reload()
+            return nil
+        } catch {
+            reload()
+            return error.localizedDescription
+        }
+    }
+
+    /// Returns an error message for the sheet, or nil on success.
+    func renameFolder(_ folder: HostFolder, to name: String) -> String? {
+        guard let library else { return errorMessage ?? "The host library isn't available." }
+        do {
+            try library.renameFolder(id: folder.id, to: name)
+            errorMessage = nil
+            reload()
+            return nil
+        } catch {
+            reload()
+            return error.localizedDescription
+        }
+    }
+
+    /// Its hosts and subfolders move up one level.
+    func deleteFolder(_ folder: HostFolder) {
+        perform("delete the folder") { try $0.deleteFolder(id: folder.id) }
+        if selectedID == folder.id { selectedID = nil }
+    }
+
+    /// Moves a host or a folder, by id, into a folder or (nil) the top level.
+    /// Dropping an item where it already is, or a folder onto itself, does nothing.
+    func move(itemID: String, toFolder folderID: String?) {
+        if let moving = folder(id: itemID) {
+            guard itemID != folderID, moving.parentId != folderID else { return }
+            perform("move the folder") { try $0.moveFolder(id: itemID, toParent: folderID) }
+        } else if let moving = entry(id: itemID) {
+            guard moving.host.folderId != folderID else { return }
+            perform("move the host") { try $0.moveHost(id: itemID, toFolder: folderID) }
+        }
     }
 
     func copyHostname(_ entry: HostEntry) {

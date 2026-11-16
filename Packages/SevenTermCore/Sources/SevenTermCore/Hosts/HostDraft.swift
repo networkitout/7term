@@ -24,6 +24,10 @@ public struct HostDraft: Hashable, Sendable {
     public var serialPath = ""
     public var serial = SerialHostDetails()
 
+    /// The folder the host is in; nil is the top level. Saving ignores an id
+    /// that isn't a folder.
+    public var folderId: String?
+
     public init() {}
 
     public init(entry: HostEntry) {
@@ -36,6 +40,7 @@ public struct HostDraft: Hashable, Sendable {
         authMethod = entry.host.authMethod
         identityFile = entry.host.identityFile ?? ""
         kind = entry.host.kind
+        folderId = entry.host.folderId
         if entry.host.kind == .serial {
             serialPath = entry.host.hostname
             hostname = ""

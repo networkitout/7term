@@ -5,10 +5,11 @@ public enum HostFilter {
     /// Every whitespace-separated word must appear (ignoring case and
     /// accents) in the host's name, hostname, user, or one of its tags.
     /// So "prox" finds the hypervisors and "prox 21" narrows to one.
-    public static func matches(_ entry: HostEntry, query: String) -> Bool {
+    /// Names in `folderPath` (the folders the host sits in) count too.
+    public static func matches(_ entry: HostEntry, query: String, folderPath: [String] = []) -> Bool {
         let words = query.split(whereSeparator: \.isWhitespace)
         guard !words.isEmpty else { return true }
-        let fields = [entry.host.name, entry.host.hostname, entry.host.username ?? ""] + entry.tags
+        let fields = [entry.host.name, entry.host.hostname, entry.host.username ?? ""] + entry.tags + folderPath
         return words.allSatisfy { word in
             fields.contains { $0.range(of: word, options: [.caseInsensitive, .diacriticInsensitive]) != nil }
         }

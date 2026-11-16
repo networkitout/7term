@@ -21,7 +21,7 @@ A small, native macOS SSH, SFTP and serial console client: a list of your hosts,
 
 ## Features
 
-- **Saved hosts** with tags, a filter, and one-click SSH or SFTP. Imports your `~/.ssh/config` on first run.
+- **Saved hosts** with folders, tags, a filter, and one-click SSH or SFTP. Imports your `~/.ssh/config` on first run.
 - **Tabs** for every session, with reconnect (⇧⌘R) and find in the scrollback (⌘F).
 - **File browser:** this Mac and the host side by side, drag and drop, folder copies, a transfer queue, and a SHA-256 for every file copied.
 - **Serial consoles:** USB console cables for switches, routers and firewalls, found by name as you plug them in, with Send Break for ROMMON and password recovery.

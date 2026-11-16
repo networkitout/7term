@@ -98,6 +98,10 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 <td>Comma-separated, for example <code>proxmox, lab</code>.</td>
 </tr>
 <tr>
+<td>Folder</td>
+<td>The folder this host lives in, or Top Level.</td>
+</tr>
+<tr>
 <td>Log every session</td>
 <td>Starts logging automatically each time this host opens.</td>
 </tr>
@@ -113,6 +117,19 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 <li>Type in <strong>Filter hosts</strong> to search names, addresses, users and tags.</li>
 <li>The menu at the bottom of the list shows only hosts with one tag.</li>
 <li>Each host appears once, whatever its tags. Its first three tags show under its name.</li>
+<li>The filter also matches folder names. Typing <code>core</code> finds every host inside a folder called "Core switches".</li>
+<li>With a filter or tag active, the list shows only matching hosts, inside their folders. Those folders open up, and empty ones are hidden. Clearing the filter puts your open and closed folders back.</li>
+</ul>
+<h3 id="folders">Folders</h3>
+<p>Folders group hosts by site, customer or lab. A host is in one folder, or at the top level. Folders can hold other folders. Each level lists folders first, then hosts, both by name. Tags stay as they are, for labels that cut across folders.</p>
+<ul>
+<li><strong>Create:</strong> right-click a folder ▸ <strong>New Folder…</strong> to make one inside it. <strong>Host ▸ New Folder…</strong> (⇧⌘N), or right-clicking the empty area of the list ▸ <strong>New Folder…</strong>, makes it inside the selected folder, or beside the selected host. Folder names are 1 to 60 characters, can't contain <code>/</code>, and must differ from their neighbours, ignoring case.</li>
+<li><strong>Rename:</strong> right-click a folder ▸ <strong>Rename…</strong>.</li>
+<li><strong>Open and close:</strong> click the arrow beside a folder. 7 Term remembers which folders are open on this Mac only. They aren't part of a backup.</li>
+<li><strong>Move:</strong> drag a host or folder onto a folder, or onto a host to put it in that host's folder. Drop it on the empty area of the list for the top level. Or right-click ▸ <strong>Move to</strong>, or use the <strong>Folder</strong> menu in the host form. A folder can't go into itself or anything inside it.</li>
+<li><strong>New host:</strong> from a folder's right-click menu, <strong>New Host…</strong> starts in that folder. Elsewhere it starts in the selected folder, or beside the selected host. <strong>Duplicate</strong> keeps the copy in the same folder.</li>
+<li><strong>Delete:</strong> right-click a folder ▸ <strong>Delete…</strong>, or select it and press Delete. The folder goes, and its hosts and folders move up one level. Nothing else is removed.</li>
+<li><strong>Open All:</strong> right-click a folder ▸ <strong>Open All</strong>, or <strong>Host ▸ Open All</strong>. It opens one tab for every host in the folder and its subfolders, in the order the list shows them (SSH for hosts, the console for serial entries). More than 10 tabs asks first. With a filter or tag active, only the hosts shown are opened. Each tab behaves as if you opened it yourself, so per-host logging still starts and a stored password still asks for Touch ID.</li>
 </ul>
 <h3 id="other-actions-right-click-a-host">Other actions (right-click a host)</h3>
 <p><strong>Duplicate</strong>, <strong>Copy Hostname</strong>, and <strong>Delete…</strong>. Deleting removes the host from 7 Term only. Your <code>~/.ssh/config</code> and any open tabs aren't touched, and its stored password is removed from the Keychain.</p>
@@ -120,7 +137,7 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 <p><strong>File ▸ Import Hosts (Spreadsheet or Another App)…</strong> (⇧⌘I):</p>
 <ol>
 <li>In Excel or Numbers, select the cells (including a header row if you have one) and copy them. Then click <strong>Paste Rows</strong>. Or click <strong>Open CSV…</strong>, or drop a CSV file onto the sheet.</li>
-<li>Check the column guesses. Each column has a menu (Name, Host, Port, User, Tags, Key file, Ignore). A header row such as <code>Name, IP, Port, User, Tags</code> is matched automatically.</li>
+<li>Check the column guesses. Each column has a menu (Name, Host, Port, User, Tags, Folder, Key file, Ignore). A header row such as <code>Name, IP, Port, User, Tags</code> is matched automatically.</li>
 <li>Check the rows: <strong>+</strong> is new, the circular arrows mean already saved, and <strong>✕</strong> shows why a row can't be imported.</li>
 <li>Optionally add a tag to every host, and choose whether hosts you already have should be updated (new details filled in, tags added) or skipped.</li>
 <li>Click <strong>Import</strong>.</li>
@@ -128,6 +145,8 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 <p>Good to know:</p>
 <ul>
 <li>Tags in one cell can be separated by <code>;</code>, <code>,</code> or <code>|</code>.</li>
+<li>The Folder column takes a path such as <code>Work/Core switches</code>. Missing folders are created, and a folder with the same path that you already have is reused.</li>
+<li>Importing never moves a host you already have into another folder.</li>
 <li>A host cell like <code>admin@10.0.0.9:2022</code> fills in the user and port too.</li>
 <li>Columns that look like passwords are shown as locked and never read. 7 Term doesn't import passwords from anywhere.</li>
 </ul>
@@ -138,7 +157,7 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 <tr>
 <th>App</th>
 <th>What to choose</th>
-<th>Becomes tags</th>
+<th>Folders or groups become</th>
 </tr>
 </thead>
 <tbody>
@@ -170,12 +189,12 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 <tr>
 <td>Ansible</td>
 <td>your inventory, INI or YAML</td>
-<td>groups</td>
+<td>tags</td>
 </tr>
 <tr>
 <td>Tabby</td>
 <td><code>~/Library/Application Support/tabby/config.yaml</code></td>
-<td>profile group</td>
+<td>tags</td>
 </tr>
 </tbody>
 </table>
@@ -344,7 +363,7 @@ New Folder, Rename, Copy Path, Show in Finder (this Mac), Delete. Deleting on th
 <p>7 Term can keep a copy of your hosts and settings in iCloud Drive, under <code>iCloud Drive/7 Term/</code>. Turn it on in <strong>Settings ▸ Backup</strong>.</p>
 <ul>
 <li>It saves a couple of seconds after any change, and keeps a dated copy per day for 30 days in <code>History/</code>.</li>
-<li><strong>Included:</strong> hosts, tags, key file paths, theme, font and text size.</li>
+<li><strong>Included:</strong> hosts, folders, tags, key file paths, theme, font and text size.</li>
 <li><strong>Never included:</strong> passwords, private keys and session logs.</li>
 </ul>
 <p><strong>To restore</strong> (after a reinstall, or on another Mac):</p>
@@ -365,6 +384,10 @@ New Folder, Rename, Copy Path, Show in Finder (this Mac), Delete. Deleting on th
 <tr>
 <td>⌘N</td>
 <td>New host</td>
+</tr>
+<tr>
+<td>⇧⌘N</td>
+<td>New folder</td>
 </tr>
 <tr>
 <td>⌘T</td>

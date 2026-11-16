@@ -4,7 +4,7 @@ import GRDB
 /// The saved hosts and their tags, in SQLite through GRDB.
 /// Secrets never go in here; milestone 6 adds credential *references* only.
 public final class HostLibrary: Sendable {
-    private let database: any DatabaseWriter
+    let database: any DatabaseWriter
 
     public init(_ database: any DatabaseWriter) throws {
         self.database = database
@@ -72,6 +72,20 @@ public final class HostLibrary: Sendable {
                 t.add(column: "serial", .text)
             }
         }
+        migrator.registerMigration("v5-folders") { db in
+            try db.create(table: "folder") { t in
+                t.primaryKey("id", .text)
+                t.column("name", .text).notNull()
+                t.column("parentId", .text).indexed().references("folder", onDelete: .setNull)
+                t.column("createdAt", .datetime).notNull()
+                t.column("updatedAt", .datetime).notNull()
+            }
+            // Sibling names are unique ignoring case; IFNULL covers the top level.
+            try db.execute(sql: "CREATE UNIQUE INDEX folder_sibling_name ON folder(IFNULL(parentId, ''), name COLLATE NOCASE)")
+            try db.alter(table: "host") { t in
+                t.add(column: "folderId", .text).indexed().references("folder", onDelete: .setNull)
+            }
+        }
         return migrator
     }
 
@@ -136,6 +150,7 @@ public final class HostLibrary: Sendable {
             host.identityFile = draft.authMethod == .keyFile ? target.identityFile : nil
             host.kind = .ssh
             host.serial = nil
+            host.folderId = try Self.existingFolderId(draft.folderId, in: db)
             try host.save(db)
 
             try Self.replaceTags(of: host.id, with: tagNames, in: db)
@@ -165,6 +180,7 @@ public final class HostLibrary: Sendable {
             host.identityFile = nil
             host.kind = .serial
             host.serial = draft.serial
+            host.folderId = try Self.existingFolderId(draft.folderId, in: db)
             try host.save(db)
             try Self.replaceTags(of: host.id, with: tagNames, in: db)
             try Self.deleteUnusedTags(in: db)
@@ -213,8 +229,9 @@ public final class HostLibrary: Sendable {
     /// ids, dates and tags. Existing hosts are never changed. Returns how
     /// many were added.
     @discardableResult
-    public func restore(_ hosts: [BackupSnapshot.Host]) throws -> Int {
+    public func restore(_ hosts: [BackupSnapshot.Host], folders: [BackupSnapshot.Folder] = []) throws -> Int {
         try database.write { db in
+            let folderMap = try Self.restoreFolders(folders, in: db)
             var added = 0
             for backup in hosts {
                 guard try SavedHost.fetchOne(db, key: backup.id) == nil else { continue }
@@ -226,13 +243,56 @@ public final class HostLibrary: Sendable {
                 draft.username = backup.username ?? ""
                 draft.name = backup.name
                 guard draft.isValid else { continue }
-                try backup.savedHost.insert(db)
+                var host = backup.savedHost
+                host.folderId = backup.folderId.flatMap { folderMap[$0] }
+                try host.insert(db)
                 try Self.replaceTags(of: backup.id, with: backup.tags, in: db)
                 added += 1
             }
             try Self.deleteUnusedTags(in: db)
             return added
         }
+    }
+
+    /// Adds the backup's folders that are missing, parents first, and returns
+    /// the id actually used for each backup folder id. A folder already in the
+    /// library maps to itself; one whose destination has a same-named sibling
+    /// (ignoring case) maps to that sibling; a parent found nowhere means the
+    /// top level.
+    private static func restoreFolders(_ backups: [BackupSnapshot.Folder], in db: Database) throws -> [String: String] {
+        let byId = Dictionary(backups.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var map: [String: String] = [:]
+        var visiting: Set<String> = []
+
+        func resolve(_ id: String) throws -> String? {
+            if let done = map[id] { return done }
+            if try HostFolder.fetchOne(db, key: id) != nil {
+                map[id] = id
+                return id
+            }
+            guard let backup = byId[id], visiting.insert(id).inserted else { return nil }
+            defer { visiting.remove(id) }
+            guard let name = HostFolder.cleanName(backup.name) else { return nil }
+            let parent = try backup.parentId.flatMap { try resolve($0) }
+            if let sibling = try HostFolder
+                .filter(Column("parentId") == parent && Column("name").collating(.nocase) == name)
+                .fetchOne(db) {
+                map[id] = sibling.id
+                return sibling.id
+            }
+            try HostFolder(id: id, name: name, parentId: parent, createdAt: backup.createdAt, updatedAt: backup.updatedAt).insert(db)
+            map[id] = id
+            return id
+        }
+
+        for backup in backups { _ = try resolve(backup.id) }
+        return map
+    }
+
+    /// The id when it names a folder, otherwise nil (top level).
+    private static func existingFolderId(_ id: String?, in db: Database) throws -> String? {
+        guard let id, try HostFolder.fetchOne(db, key: id) != nil else { return nil }
+        return id
     }
 
     // MARK: Tags
@@ -256,6 +316,20 @@ public final class HostLibrary: Sendable {
     }
 }
 
-public enum HostLibraryError: Error, Equatable {
+public enum HostLibraryError: Error, Equatable, LocalizedError {
     case invalidDraft
+    case invalidFolderName
+    case duplicateFolderName
+    case folderNotFound
+    case folderCycle
+
+    public var errorDescription: String? {
+        switch self {
+        case .invalidDraft: "That host can't be saved as it is."
+        case .invalidFolderName: "Folder names are 1 to 60 characters and can't contain \"/\"."
+        case .duplicateFolderName: "There's already a folder with that name here."
+        case .folderNotFound: "That folder no longer exists."
+        case .folderCycle: "A folder can't be moved into itself."
+        }
+    }
 }

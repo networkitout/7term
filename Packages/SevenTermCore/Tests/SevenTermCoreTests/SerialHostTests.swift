@@ -65,7 +65,7 @@ import Testing
         let library = try HostLibrary.inMemory()
         try library.save(serialDraft())
         let snapshot = BackupSnapshot(
-            appVersion: "test", hosts: try library.entries(),
+            appVersion: "test", hosts: try library.entries(), folders: [],
             settings: .init(paletteID: "7term", fontFamily: nil, fontSize: 13), importedPalettes: [])
         let decoded = try BackupSnapshot.decode(snapshot.encoded())
         #expect(decoded.hosts[0].kind == .serial)
