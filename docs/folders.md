@@ -1,6 +1,6 @@
 # Host folders: design
 
-Status: proposed, not yet approved or built.
+Status: built.
 
 ## Why
 
@@ -97,7 +97,7 @@ usb-console
 Migration `v5-folders`:
 
 - Table `folder`: `id` text primary key, `name` text not null, `parentId` text null referencing `folder`, `createdAt`, `updatedAt`.
-- Unique index on (`parentId`, `name` without regard to case). SQLite treats nulls as distinct in a unique index, so top-level uniqueness is also checked in code.
+- Unique index `folder_sibling_name`: `CREATE UNIQUE INDEX folder_sibling_name ON folder(IFNULL(parentId, ''), name COLLATE NOCASE)`. SQLite treats nulls as distinct in a unique index, so `IFNULL(parentId, '')` makes top-level names unique in the database itself.
 - Column `host.folderId` text null, referencing `folder`, set to null if the folder goes.
 
 Deleting a folder is done in code inside one transaction: re-parent its hosts and subfolders to its parent, then delete the row. The foreign key rules are a safety net, not the mechanism.

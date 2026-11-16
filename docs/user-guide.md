@@ -39,6 +39,7 @@ The host form has two columns:
 | Port | Leave empty for 22, or whatever your ssh_config says. |
 | User | Leave empty to use your ssh_config or your Mac username. |
 | Tags | Comma-separated, for example `proxmox, lab`. |
+| Folder | The folder this host lives in, or Top Level. |
 | Log every session | Starts logging automatically each time this host opens. |
 | Sign in with | See [Signing in](#signing-in). |
 
@@ -49,6 +50,20 @@ The line under the left column shows the exact ssh command 7 Term will run. **Te
 - Type in **Filter hosts** to search names, addresses, users and tags.
 - The menu at the bottom of the list shows only hosts with one tag.
 - Each host appears once, whatever its tags. Its first three tags show under its name.
+- The filter also matches folder names. Typing `core` finds every host inside a folder called "Core switches".
+- With a filter or tag active, the list shows only matching hosts, inside their folders. Those folders open up, and empty ones are hidden. Clearing the filter puts your open and closed folders back.
+
+### Folders
+
+Folders group hosts by site, customer or lab. A host is in one folder, or at the top level. Folders can hold other folders. Each level lists folders first, then hosts, both by name. Tags stay as they are, for labels that cut across folders.
+
+- **Create:** **Host ▸ New Folder…** (⇧⌘N), or right-click in the list ▸ **New Folder…**. The folder is made inside the selected folder, or beside the selected host. Folder names are 1 to 60 characters, can't contain `/`, and must differ from their neighbours, ignoring case.
+- **Rename:** right-click a folder ▸ **Rename…**.
+- **Open and close:** click the arrow beside a folder. 7 Term remembers which folders are open on this Mac only. They aren't part of a backup.
+- **Move:** drag a host or folder onto a folder, or onto a host to put it in that host's folder. Drop it on the empty area of the list for the top level. Or right-click ▸ **Move to**, or use the **Folder** menu in the host form. A folder can't go into itself or anything inside it.
+- **New host:** from a folder's right-click menu, **New Host…** starts in that folder. Elsewhere it starts in the selected folder, or beside the selected host. **Duplicate** keeps the copy in the same folder.
+- **Delete:** right-click a folder ▸ **Delete…**, or select it and press Delete. The folder goes, and its hosts and folders move up one level. Nothing else is removed.
+- **Open All:** right-click a folder ▸ **Open All**, or **Host ▸ Open All**. It opens one tab for every host in the folder and its subfolders, in the order the list shows them (SSH for hosts, the console for serial entries). More than 10 tabs asks first. With a filter or tag active, only the hosts shown are opened. Each tab behaves as if you opened it yourself, so per-host logging still starts and a stored password still asks for Touch ID.
 
 ### Other actions (right-click a host)
 
@@ -59,13 +74,15 @@ The line under the left column shows the exact ssh command 7 Term will run. **Te
 **File ▸ Import Hosts (Spreadsheet or Another App)…** (⇧⌘I):
 
 1. In Excel or Numbers, select the cells (including a header row if you have one) and copy them. Then click **Paste Rows**. Or click **Open CSV…**, or drop a CSV file onto the sheet.
-2. Check the column guesses. Each column has a menu (Name, Host, Port, User, Tags, Key file, Ignore). A header row such as `Name, IP, Port, User, Tags` is matched automatically.
+2. Check the column guesses. Each column has a menu (Name, Host, Port, User, Tags, Folder, Key file, Ignore). A header row such as `Name, IP, Port, User, Tags` is matched automatically.
 3. Check the rows: **+** is new, the circular arrows mean already saved, and **✕** shows why a row can't be imported.
 4. Optionally add a tag to every host, and choose whether hosts you already have should be updated (new details filled in, tags added) or skipped.
 5. Click **Import**.
 
 Good to know:
 - Tags in one cell can be separated by `;`, `,` or `|`.
+- The Folder column takes a path such as `Work/Core switches`. Missing folders are created, and a folder with the same path that you already have is reused.
+- Importing never moves a host you already have into another folder.
 - A host cell like `admin@10.0.0.9:2022` fills in the user and port too.
 - Columns that look like passwords are shown as locked and never read. 7 Term doesn't import passwords from anywhere.
 
@@ -73,15 +90,15 @@ Good to know:
 
 **File ▸ Import Hosts (Spreadsheet or Another App)…** (⇧⌘I), then **From Another App…**. You can also drop the file onto the sheet. 7 Term works out which app it came from:
 
-| App | What to choose | Becomes tags |
+| App | What to choose | Folders or groups become |
 |---|---|---|
 | Royal TSX | your document (`.rtsz`) | folders |
 | SecureCRT | its **Sessions** folder: `~/Library/Application Support/VanDyke/SecureCRT/Config/Sessions` | folders |
 | PuTTY / KiTTY | a registry export: `reg export HKCU\Software\SimonTatham\PuTTY\Sessions putty.reg` | — |
 | MobaXterm | right-click **User sessions ▸ Export all sessions to file** (`.mxtsessions`) | folders |
 | FileZilla | **File ▸ Export…**, or `sitemanager.xml` (SFTP sites only) | folders |
-| Ansible | your inventory, INI or YAML | groups |
-| Tabby | `~/Library/Application Support/tabby/config.yaml` | profile group |
+| Ansible | your inventory, INI or YAML | tags |
+| Tabby | `~/Library/Application Support/tabby/config.yaml` | tags |
 
 You get the same preview as a spreadsheet import, with the same checks and the same choice to skip or update hosts you already have. Sessions that aren't SSH (RDP, VNC, telnet, FTP, web) are listed as left out rather than dropped silently. **Passwords are never imported**, even from files that contain them, and Windows key paths (`C:\…`) are dropped because they don't exist on a Mac.
 
@@ -222,7 +239,7 @@ You can also **import an iTerm2 colour scheme** (`.itermcolors`) in Settings ▸
 7 Term can keep a copy of your hosts and settings in iCloud Drive, under `iCloud Drive/7 Term/`. Turn it on in **Settings ▸ Backup**.
 
 - It saves a couple of seconds after any change, and keeps a dated copy per day for 30 days in `History/`.
-- **Included:** hosts, tags, key file paths, theme, font and text size.
+- **Included:** hosts, folders, tags, key file paths, theme, font and text size.
 - **Never included:** passwords, private keys and session logs.
 
 **To restore** (after a reinstall, or on another Mac):
@@ -235,6 +252,7 @@ You can also **import an iTerm2 colour scheme** (`.itermcolors`) in Settings ▸
 | Keys | Action |
 |---|---|
 | ⌘N | New host |
+| ⇧⌘N | New folder |
 | ⌘T | Quick Connect |
 | Return, double-click, ⌘Return | Open a terminal to the selected host |
 | ⌥⌘Return | Browse files on the selected host |
