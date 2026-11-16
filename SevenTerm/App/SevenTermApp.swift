@@ -114,6 +114,9 @@ struct SevenTermApp: App {
                 Divider()
             }
             CommandMenu("Host") {
+                Button("New Folder…") { hosts.folderNameRequest = .new(parentId: hosts.folderForNewItems) }
+                    .keyboardShortcut("n", modifiers: [.command, .shift])
+                Divider()
                 Button("Connect with SSH") {
                     if let entry = hosts.selectedEntry { sessions.open(entry, kind: .ssh) }
                 }

@@ -72,6 +72,7 @@ final class BackupManager {
         let snapshot = BackupSnapshot(
             appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?",
             hosts: hosts.entries,
+            folders: hosts.folders,
             settings: .init(
                 paletteID: appearance.paletteID,
                 fontFamily: appearance.fontFamily,
@@ -131,7 +132,7 @@ final class BackupManager {
         guard confirm.runModal() == .alertFirstButtonReturn else { return }
 
         do {
-            let added = try hosts.restore(snapshot.hosts)
+            let added = try hosts.restore(snapshot.hosts, folders: snapshot.folders ?? [])
             appearance.applyBackup(snapshot.settings, palettes: snapshot.importedPalettes)
             alert("Restored", added == 1 ? "Added 1 host." : "Added \(added) hosts.")
         } catch {
