@@ -117,6 +117,13 @@ struct SevenTermApp: App {
                 Button("New Folder…") { hosts.folderNameRequest = .new(parentId: hosts.folderForNewItems) }
                     .keyboardShortcut("n", modifiers: [.command, .shift])
                 Divider()
+                Button("Open All") {
+                    if let folder = hosts.selectedFolder {
+                        hosts.requestOpenAll(in: folder, open: sessions.openAll)
+                    }
+                }
+                .disabled(hosts.selectedFolder.map { hosts.hosts(in: $0).isEmpty } ?? true)
+                Divider()
                 Button("Connect with SSH") {
                     if let entry = hosts.selectedEntry { sessions.open(entry, kind: .ssh) }
                 }

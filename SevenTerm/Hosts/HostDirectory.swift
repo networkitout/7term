@@ -64,6 +64,11 @@ final class HostDirectory {
     var folderNameRequest: FolderNameRequest?
     /// A folder waiting for the delete confirmation.
     var pendingFolderDelete: HostFolder?
+    /// Hosts waiting for the Open All confirmation, and the folder they came from.
+    var pendingOpenAll: [HostEntry]?
+    var pendingOpenAllFolderName: String?
+    /// Opening more tabs than this at once asks first.
+    static let openAllConfirmThreshold = 10
     /// Open folders in the sidebar. Kept on this Mac only.
     var expandedFolderIDs: Set<String> {
         didSet {
@@ -137,6 +142,18 @@ final class HostDirectory {
     /// Hosts under a folder, subfolders included, as the sidebar shows them.
     func hosts(in folder: HostFolder) -> [HostEntry] {
         HostTree.hosts(in: folder.id, nodes: tree)
+    }
+
+    /// Opens every host under a folder, or asks first when there are many.
+    func requestOpenAll(in folder: HostFolder, open: ([HostEntry]) -> Void) {
+        let entries = hosts(in: folder)
+        guard !entries.isEmpty else { return }
+        if entries.count > Self.openAllConfirmThreshold {
+            pendingOpenAll = entries
+            pendingOpenAllFolderName = folder.name
+        } else {
+            open(entries)
+        }
     }
 
     var allTags: [String] {

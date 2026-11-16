@@ -25,6 +25,9 @@ struct HostSidebar: View {
         }
         .contextMenu(forSelectionType: String.self) { itemIDs in
             if let folder = itemIDs.first.flatMap(hosts.folder(id:)) {
+                Button("Open All") { hosts.requestOpenAll(in: folder, open: sessions.openAll) }
+                    .disabled(hosts.hosts(in: folder).isEmpty)
+                Divider()
                 Button("New Host…") { hosts.editor = .new(folderID: folder.id) }
                 Button("New Folder…") { hosts.folderNameRequest = .new(parentId: folder.id) }
                 Divider()
@@ -129,6 +132,21 @@ struct HostSidebar: View {
                 case .rename(let folder): hosts.renameFolder(folder, to: name)
                 }
             }
+        }
+        .confirmationDialog(
+            "Open \(hosts.pendingOpenAll?.count ?? 0) tabs?",
+            isPresented: Binding(
+                get: { hosts.pendingOpenAll != nil },
+                set: { if !$0 { hosts.pendingOpenAll = nil; hosts.pendingOpenAllFolderName = nil } }
+            ),
+            presenting: hosts.pendingOpenAll
+        ) { entries in
+            Button("Open \(entries.count) Tabs") {
+                sessions.openAll(entries)
+                hosts.pendingOpenAllFolderName = nil
+            }
+        } message: { _ in
+            Text("One tab for each host in \"\(hosts.pendingOpenAllFolderName ?? "")\", including its folders.")
         }
         .confirmationDialog(
             "Delete the folder \"\(hosts.pendingFolderDelete?.name ?? "")\"?",

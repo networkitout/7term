@@ -41,6 +41,11 @@ final class SessionStore {
         selected?.state == .running
     }
 
+    /// Opens one tab for each host, in order.
+    func openAll(_ entries: [HostEntry]) {
+        for entry in entries { open(entry, kind: .ssh) }
+    }
+
     /// Opens a saved host as an ssh or sftp tab, or a serial entry as a
     /// serial tab whatever `kind` asks for.
     func open(_ entry: HostEntry, kind: TerminalSession.Kind) {
