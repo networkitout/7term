@@ -25,7 +25,7 @@ struct HostSidebar: View {
         }
         .contextMenu(forSelectionType: String.self) { itemIDs in
             if let folder = itemIDs.first.flatMap(hosts.folder(id:)) {
-                Button("New Host…") { hosts.editor = .new }
+                Button("New Host…") { hosts.editor = .new(folderID: folder.id) }
                 Button("New Folder…") { hosts.folderNameRequest = .new(parentId: folder.id) }
                 Divider()
                 Button("Rename…") { hosts.folderNameRequest = .rename(folder) }
@@ -53,7 +53,7 @@ struct HostSidebar: View {
                 Divider()
                 Button("Delete…", role: .destructive) { hosts.pendingDelete = entry }
             } else {
-                Button("New Host…") { hosts.editor = .new }
+                Button("New Host…") { hosts.editor = .new(folderID: hosts.folderForNewItems) }
                 Button("New Folder…") { hosts.folderNameRequest = .new(parentId: nil) }
             }
         } primaryAction: { itemIDs in
@@ -106,7 +106,7 @@ struct HostSidebar: View {
             }
         }
         .sheet(item: $hosts.editor) { request in
-            HostFormSheet(entry: request.entry) { draft, password in
+            HostFormSheet(entry: request.entry, folders: hosts.folders, initialFolderID: request.folderID) { draft, password in
                 hosts.save(draft, id: request.entry?.id, password: password)
             }
         }
@@ -179,7 +179,7 @@ struct HostSidebar: View {
 
     private var newHostButton: some View {
         Button {
-            hosts.editor = .new
+            hosts.editor = .new(folderID: hosts.folderForNewItems)
         } label: {
             Label("New Host", systemImage: "plus")
         }
@@ -194,7 +194,7 @@ struct HostSidebar: View {
                 Text("Add one, or import your ~/.ssh/config aliases.")
             } actions: {
                 VStack(spacing: 8) {
-                    Button("New Host…") { hosts.editor = .new }
+                    Button("New Host…") { hosts.editor = .new(folderID: hosts.folderForNewItems) }
                     Button("Import from ssh_config…") { hosts.presentImport() }
                     Button("Import from a Spreadsheet or App…") { hosts.isSpreadsheetImportPresented = true }
                 }

@@ -61,7 +61,7 @@ struct SevenTermApp: App {
                     .disabled(!updater.isAvailable)
             }
             CommandGroup(replacing: .newItem) {
-                Button("New Host…") { hosts.editor = .new }
+                Button("New Host…") { hosts.editor = .new(folderID: hosts.folderForNewItems) }
                     .keyboardShortcut("n", modifiers: .command)
                 Button("Quick Connect…") { sessions.isQuickConnectPresented = true }
                     .keyboardShortcut("t", modifiers: .command)

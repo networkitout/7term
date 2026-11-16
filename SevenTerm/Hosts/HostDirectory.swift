@@ -5,7 +5,7 @@ import SevenTermCore
 
 /// What the host sheet is editing.
 enum HostEditorRequest: Identifiable {
-    case new
+    case new(folderID: String?)
     case edit(HostEntry)
 
     var id: String {
@@ -19,6 +19,14 @@ enum HostEditorRequest: Identifiable {
         switch self {
         case .new: nil
         case .edit(let entry): entry
+        }
+    }
+
+    /// The folder a new host starts in; nil for the top level or an edit.
+    var folderID: String? {
+        switch self {
+        case .new(let folderID): folderID
+        case .edit: nil
         }
     }
 }

@@ -40,6 +40,11 @@ struct SpreadsheetImportSheet: View {
                     mapping(table)
                 }
                 preview
+                if table.columns.contains(.folder) {
+                    Text("Folders are written as a path, for example Work/Core switches.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 options
             } else {
                 start
@@ -329,7 +334,9 @@ struct SpreadsheetImportSheet: View {
         if candidate.existingID != nil {
             return updateExisting ? "updates the saved host" + (tags.isEmpty ? "" : " · adds \(tags)") : "already saved, skipped"
         }
-        return tags
+        // Existing hosts are never moved, so only new rows show a folder.
+        let folder = candidate.folderPath.joined(separator: "/")
+        return [folder, tags].filter { !$0.isEmpty }.joined(separator: " · ")
     }
 
     private var options: some View {

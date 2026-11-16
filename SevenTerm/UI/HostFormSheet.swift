@@ -6,6 +6,7 @@ import SevenTermCore
 struct HostFormSheet: View {
     @Environment(\.chrome) private var chrome
     let entry: HostEntry?
+    let folders: [HostFolder]
     /// Saves the draft and a new Keychain password (nil keeps the stored
     /// one), and returns an error message, or nil on success.
     let onSave: (HostDraft, String?) -> String?
@@ -20,10 +21,19 @@ struct HostFormSheet: View {
     @State private var password = ""
     private let hasStoredPassword: Bool
 
-    init(entry: HostEntry?, onSave: @escaping (HostDraft, String?) -> String?) {
+    /// A new host starts in `initialFolderID`; an edited one in its own folder.
+    init(
+        entry: HostEntry?,
+        folders: [HostFolder],
+        initialFolderID: String?,
+        onSave: @escaping (HostDraft, String?) -> String?
+    ) {
         self.entry = entry
+        self.folders = folders
         self.onSave = onSave
-        _draft = State(initialValue: entry.map(HostDraft.init(entry:)) ?? HostDraft())
+        var initial = entry.map(HostDraft.init(entry:)) ?? HostDraft()
+        if entry == nil { initial.folderId = initialFolderID }
+        _draft = State(initialValue: initial)
         hasStoredPassword = entry.map { PasswordVault.exists(hostID: $0.id) } ?? false
     }
 
@@ -65,6 +75,7 @@ struct HostFormSheet: View {
                         field("Port", text: $draft.port, prompt: "22, or from ssh_config", error: .port)
                         field("User", text: $draft.username, prompt: "From ssh_config", error: .username)
                         field("Tags", text: $draft.tags, prompt: "proxmox, lab", error: .tags)
+                        folderPicker
                         Toggle("Log every session", isOn: $draft.logByDefault)
                     } header: {
                         Text(entry == nil ? "New Host" : "Edit Host")
@@ -108,6 +119,17 @@ struct HostFormSheet: View {
                 .formStyle(.grouped)
                 .frame(width: 340)
             }
+    }
+
+    private var folderPicker: some View {
+        Picker("Folder", selection: $draft.folderId) {
+            Text("Top Level").tag(String?.none)
+            Divider()
+            ForEach(HostTree.flattened(folders: folders), id: \.folder.id) { target in
+                Text(String(repeating: "\u{2003}", count: target.depth) + target.folder.name)
+                    .tag(Optional(target.folder.id))
+            }
+        }
     }
 
     private var footer: some View {
@@ -171,6 +193,7 @@ struct HostFormSheet: View {
                         }
                     }
                     field("Tags", text: $draft.tags, prompt: "console, lab", error: .tags)
+                    folderPicker
                     Toggle("Log every session", isOn: $draft.logByDefault)
                 } header: {
                     Text(entry == nil ? "New Serial Console" : "Edit Serial Console")
