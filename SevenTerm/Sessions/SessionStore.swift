@@ -95,6 +95,9 @@ final class SessionStore {
             kind: kind, target: target, name: name, logByDefault: logByDefault,
             keychainHost: keychainHost, appearance: appearance
         )
+        session.remoteTarget = { [weak self] browserID in
+            self?.sessions.first { $0.files?.id == browserID }?.target
+        }
         sessions.append(session)
         selectedID = session.id
         session.start()

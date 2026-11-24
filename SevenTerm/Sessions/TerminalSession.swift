@@ -57,7 +57,11 @@ final class TerminalSession: Identifiable {
     /// The segment being written, or the last one written.
     private(set) var lastLogURL: URL?
 
-    @ObservationIgnored let terminalView: TerminalView
+    @ObservationIgnored let terminalView: DropTerminalView
+    /// Finds the host a file browser tab is connected to, by the browser's id.
+    /// Set by the session store, so a row dragged from a host pane can be
+    /// checked against this tab's host.
+    @ObservationIgnored var remoteTarget: ((UUID) -> SSHTarget?)?
     /// Set for a file browser tab, which shows this instead of the terminal.
     let files: FileBrowser?
     /// Set for a serial console tab: the port and its settings.
@@ -113,10 +117,33 @@ final class TerminalSession: Identifiable {
         self.keychainHost = keychainHost
         self.name = name
         self.logByDefault = logByDefault
-        terminalView = TerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 500))
+        terminalView = DropTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 500))
         files = kind == .files ? FileBrowser(target: target, keychainHost: keychainHost) : nil
         appearance.apply(to: terminalView)
         terminalView.terminalDelegate = self
+        terminalView.dropText = { [weak self] pasteboard in
+            MainActor.assumeIsolated { self?.textForDrop(pasteboard) }
+        }
+    }
+
+    /// What a drop on this tab types, or nil to refuse it. Only ssh and sftp
+    /// prompt tabs that are connected accept drops: serial devices aren't
+    /// shells, and an ended tab has nothing to type into.
+    /// - Finder items (and the file browser's Mac pane): their Mac paths.
+    /// - Rows from a file browser's host pane: their server paths, only when
+    ///   that browser is connected to the same machine as this tab.
+    func textForDrop(_ pasteboard: NSPasteboard) -> String? {
+        guard state == .running, kind == .ssh || kind == .sftp else { return nil }
+        if let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL],
+           !urls.isEmpty {
+            return DroppedPaths.typedText(for: urls.map(\.path))
+        }
+        guard let strings = pasteboard.readObjects(forClasses: [NSString.self]) as? [String] else { return nil }
+        let rows = strings.compactMap(RemoteDragPayload.parse)
+        guard !rows.isEmpty, rows.count == strings.count,
+              rows.allSatisfy({ remoteTarget?($0.browserID)?.isSameMachine(as: target) == true })
+        else { return nil }
+        return DroppedPaths.typedText(for: rows.map(\.path))
     }
 
     func start() {
