@@ -22,6 +22,7 @@ struct SevenTermApp: App {
     @State private var backup: BackupManager
     @State private var serialPorts = SerialPortList()
     @State private var updater = Updater()
+    @State private var whatsNew = WhatsNewCenter()
 
     init() {
         // Before anything reads settings or the host library.
@@ -46,6 +47,7 @@ struct SevenTermApp: App {
                 .environment(sessions)
                 .environment(hosts)
                 .environment(appearance)
+                .environment(whatsNew)
                 .frame(minWidth: 820, minHeight: 440)
                 .onAppear {
                     appDelegate.store = sessions
@@ -72,7 +74,7 @@ struct SevenTermApp: App {
                 Button("Restore from Backup…") { backup.chooseAndRestore() }
             }
             CommandGroup(replacing: .help) {
-                HelpMenuButton()
+                HelpMenuButton(whatsNew: whatsNew)
             }
             // Edit ▸ Find: SwiftTerm's find bar over the current terminal tab.
             CommandGroup(after: .pasteboard) {
@@ -222,9 +224,11 @@ struct SevenTermApp: App {
 /// Help ▸ 7 Term Help (⌘?). A view, so it can open the help window.
 private struct HelpMenuButton: View {
     @Environment(\.openWindow) private var openWindow
+    let whatsNew: WhatsNewCenter
 
     var body: some View {
         Button("7 Term Help") { openWindow(id: "help") }
             .keyboardShortcut("?", modifiers: .command)
+        Button("What's New…") { whatsNew.showHistory() }
     }
 }

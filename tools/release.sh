@@ -40,6 +40,10 @@ step "Checking"
 [ -n "$SPARKLE_KEY" ] || fail "Set SPARKLE_PUBLIC_KEY in project.yml (docs/releasing.md, step 3)."
 [ -z "$(git status --porcelain)" ] || fail "Commit or stash your changes first; a release is built from a clean commit."
 git rev-parse "$TAG" >/dev/null 2>&1 && fail "Tag $TAG already exists."
+# The What's New sheet shows these notes after the update installs.
+WHATS_NEW="SevenTerm/Resources/WhatsNew.json"
+grep -q "\"version\": *\"$VERSION\"" "$WHATS_NEW" \
+    || fail "No What's New entry for $VERSION in $WHATS_NEW. Add one (a fixes-only release can say \"Fixes and small improvements.\")."
 security find-identity -v -p codesigning | grep -q "Developer ID Application: .*($TEAM_ID)" \
     || fail "No 'Developer ID Application' certificate for team $TEAM_ID in your Keychain (docs/releasing.md, step 1)."
 xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1 \

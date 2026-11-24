@@ -7,9 +7,11 @@ struct MainView: View {
     @Environment(SessionStore.self) private var sessions
     @Environment(HostDirectory.self) private var hosts
     @Environment(Appearance.self) private var appearance
+    @Environment(WhatsNewCenter.self) private var whatsNew
 
     var body: some View {
         @Bindable var hosts = hosts
+        @Bindable var whatsNew = whatsNew
         let chrome = Chrome.forPalette(id: appearance.paletteID)
 
         NavigationSplitView {
@@ -46,7 +48,15 @@ struct MainView: View {
         .sheet(isPresented: $hosts.isSpreadsheetImportPresented) {
             SpreadsheetImportSheet()
         }
-        .task { hosts.offerImportIfFirstRun() }
+        .sheet(item: $whatsNew.shown) { presentation in
+            WhatsNewSheet(presentation: presentation) { whatsNew.shown = nil }
+        }
+        .task {
+            // Before the first-run offer, which marks the app as used.
+            let usedBefore = hosts.hasBeenUsedBefore
+            hosts.offerImportIfFirstRun()
+            whatsNew.checkAtLaunch(isExistingUser: usedBefore)
+        }
         // Outermost, so every view and sheet in the window gets it.
         .environment(\.chrome, chrome)
     }

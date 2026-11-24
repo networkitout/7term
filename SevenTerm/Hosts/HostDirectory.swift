@@ -85,6 +85,12 @@ final class HostDirectory {
     /// Called after the host list changes; the backup uses it.
     @ObservationIgnored var onChange: (() -> Void)?
     private static let didOfferImportKey = "didOfferSSHConfigImport"
+
+    /// Whether 7 Term was used before this launch: hosts saved, or the
+    /// first-run import already offered. Read it before the offer runs.
+    var hasBeenUsedBefore: Bool {
+        !entries.isEmpty || UserDefaults.standard.bool(forKey: Self.didOfferImportKey)
+    }
     private static let expandedFoldersKey = "expandedFolders"
 
     init() {
