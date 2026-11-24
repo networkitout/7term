@@ -22,6 +22,7 @@ struct SevenTermApp: App {
     @State private var backup: BackupManager
     @State private var serialPorts = SerialPortList()
     @State private var updater = Updater()
+    @State private var whatsNew = WhatsNewCenter()
 
     init() {
         // Before anything reads settings or the host library.
@@ -46,6 +47,7 @@ struct SevenTermApp: App {
                 .environment(sessions)
                 .environment(hosts)
                 .environment(appearance)
+                .environment(whatsNew)
                 .frame(minWidth: 820, minHeight: 440)
                 .onAppear {
                     appDelegate.store = sessions
@@ -197,6 +199,15 @@ struct SevenTermApp: App {
             }
         }
 
+        Window("What's New", id: "whats-new") {
+            WhatsNewSheet(presentation: .init(title: "What's New in 7 Term", entries: WhatsNewCenter.history)) {
+                NSApp.keyWindow?.performClose(nil)
+            }
+            .environment(\.chrome, Chrome.forPalette(id: appearance.paletteID))
+            .tint(Chrome.forPalette(id: appearance.paletteID).accent)
+        }
+        .windowResizability(.contentSize)
+
         Window("7 Term Help", id: "help") {
             HelpView()
                 .environment(appearance)
@@ -226,5 +237,6 @@ private struct HelpMenuButton: View {
     var body: some View {
         Button("7 Term Help") { openWindow(id: "help") }
             .keyboardShortcut("?", modifiers: .command)
+        Button("What's New…") { openWindow(id: "whats-new") }
     }
 }

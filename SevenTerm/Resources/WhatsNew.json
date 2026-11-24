@@ -1,0 +1,32 @@
+[
+  {
+    "version": "1.5.0",
+    "items": [
+      {
+        "title": "Two tabs side by side",
+        "detail": "Right-click a tab and choose Show Beside, or press ⌥⌘S, to see two sessions at once. Whatever you type, and commands such as ⌘W, go to the side you last clicked."
+      },
+      {
+        "title": "Drop a folder to type its path",
+        "detail": "Type cd and a space, then drag a folder from Finder into a terminal: its path appears, ready for Return. Drag from a file browser's host pane onto a terminal for the same host to get the path on the server."
+      },
+      {
+        "title": "Tabs open while you drag",
+        "detail": "Hold a drag over a tab for a moment and it opens, so you can drop onto any terminal."
+      },
+      {
+        "title": "Reconnect from the tab",
+        "detail": "Right-click a tab whose session has ended and choose Reconnect."
+      }
+    ]
+  },
+  {
+    "version": "1.6.0",
+    "items": [
+      {
+        "title": "What's New",
+        "detail": "After an update, 7 Term shows what changed, like this. See it again any time with Help ▸ What's New."
+      }
+    ]
+  }
+]

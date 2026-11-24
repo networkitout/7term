@@ -44,8 +44,9 @@ Back up the private key (`generate_keys -x sparkle-key.txt`, then keep that file
 
 ## Each release
 
-1. Commit everything (the script refuses to build from uncommitted changes).
-2. `tools/release.sh 1.2.0`
+1. Add the release's notes to `SevenTerm/Resources/WhatsNew.json`: a few items, each a title and a sentence or two for people using the app. They appear in the What's New sheet on the first launch after the update. The script refuses a version with no entry; a fixes-only release can say "Fixes and small improvements."
+2. Commit everything (the script refuses to build from uncommitted changes).
+3. `tools/release.sh 1.2.0`
 
 The build number is the commit count, so it always goes up, which Sparkle needs to see a newer version. The update feed (`appcast.xml`) lists only the newest release and its DMG, with no delta updates, so every link in it points at a file attached to that GitHub release. The script checks this before publishing.
 

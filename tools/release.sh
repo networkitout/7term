@@ -40,6 +40,29 @@ step "Checking"
 [ -n "$SPARKLE_KEY" ] || fail "Set SPARKLE_PUBLIC_KEY in project.yml (docs/releasing.md, step 3)."
 [ -z "$(git status --porcelain)" ] || fail "Commit or stash your changes first; a release is built from a clean commit."
 git rev-parse "$TAG" >/dev/null 2>&1 && fail "Tag $TAG already exists."
+# The What's New sheet shows these notes after the update installs. Parse the
+# file (a typo would ship a release whose notes nobody sees) and require an
+# entry for this version with at least one item, and no repeated versions.
+WHATS_NEW="SevenTerm/Resources/WhatsNew.json"
+NOTES_CHECK="$(osascript -l JavaScript - "$WHATS_NEW" "$VERSION" 2>&1 <<'JS'
+function run(argv) {
+    ObjC.import("Foundation");
+    const text = $.NSString.stringWithContentsOfFileEncodingError(argv[0], 4, null);
+    if (!text) return "can't read " + argv[0];
+    let entries;
+    try { entries = JSON.parse(text.js); } catch (e) { return argv[0] + " isn't valid JSON: " + e.message; }
+    const versions = entries.map(e => e.version);
+    if (new Set(versions).size !== versions.length) return "a version appears twice";
+    for (const entry of entries) {
+        if (!Array.isArray(entry.items) || entry.items.length === 0) return entry.version + " has no items";
+        for (const item of entry.items) if (!item.title || !item.detail) return entry.version + " has an item without a title or detail";
+    }
+    return versions.includes(argv[1]) ? "ok" : "no entry for " + argv[1];
+}
+JS
+)" || true
+[ "$NOTES_CHECK" = "ok" ] \
+    || fail "What's New notes ($WHATS_NEW): $NOTES_CHECK. Add an entry for $VERSION (a fixes-only release can say \"Fixes and small improvements.\")."
 security find-identity -v -p codesigning | grep -q "Developer ID Application: .*($TEAM_ID)" \
     || fail "No 'Developer ID Application' certificate for team $TEAM_ID in your Keychain (docs/releasing.md, step 1)."
 xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1 \

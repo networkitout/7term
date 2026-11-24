@@ -269,6 +269,10 @@ You can also **import an iTerm2 colour scheme** (`.itermcolors`) in Settings ▸
 2. 7 Term adds the hosts you don't already have and applies the saved theme and text size. Hosts already in 7 Term aren't changed.
 3. Hosts that used **Password in Keychain** need their passwords entered again.
 
+## What's New
+
+After 7 Term updates itself, the first launch shows what changed in a short sheet. If you skipped versions, it lists each one. **Help ▸ What's New** shows the notes again any time.
+
 ## Keyboard shortcuts
 
 | Keys | Action |
