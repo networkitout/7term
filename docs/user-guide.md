@@ -122,6 +122,18 @@ Several tabs to the same host look alike. To tell them apart, give a tab its own
 
 The name is shown exactly as you type it. It replaces the title the remote shell sets, so a prompt that changes the title won't overwrite it. Hover over a renamed tab to see its usual label. Names and colours stay when you reconnect with ⇧⌘R, but they last only until you close the tab. Logs are still named after the host, never the tab.
 
+### Two tabs side by side
+
+To see two sessions at once, right-click a tab and choose **Show Beside**: the tab you were on stays on the left and the one you clicked opens on the right. Or choose **View ▸ Show Side by Side** (⌥⌘S) to show the tab you used before this one beside it.
+
+- Click in either side to work there. ⌘W, ⇧⌘R, logging, ⌘F and Send Break act on the side you last clicked, and new connections open there.
+- In the tab bar, the side you're working in has the usual underline and the other visible tab a dimmer one. Clicking a hidden tab shows it in the side you're working in.
+- ⇧⌘] and ⇧⌘[ step through the tabs on the current side, skipping the one on the other side.
+- Drag the divider to resize; each side keeps a minimum width.
+- **View ▸ Show One Tab** (⌥⌘S again) goes back to one tab, as does closing either visible tab.
+- Drags between the two sides work directly, for example a folder from a file browser on one side into a terminal on the other.
+- Holding a drag over a hidden tab while split opens it beside the side you're dragging from.
+
 ### Dropping paths into a terminal
 
 As in Terminal, you can type `cd ` and then drag a folder onto the tab: its path appears at the prompt, ready for you to press Return. Spaces and other characters a shell treats specially are escaped (`My Folder` becomes `My\ Folder`). Drop several items to get several paths.
@@ -270,6 +282,7 @@ You can also **import an iTerm2 colour scheme** (`.itermcolors`) in Settings ▸
 | ⇧⌘I | Import hosts from a spreadsheet or another app |
 | ⌘W | Close tab (closes the window when no tabs are open) |
 | ⇧⌘] / ⇧⌘[ | Next / previous tab |
+| ⌥⌘S | Two tabs side by side, or back to one |
 | ⇧⌘R | Reconnect an ended session |
 | ⇧⌘L | Start or stop logging the current tab |
 | ⌘F / ⌘G / ⇧⌘G | Find / next / previous in the terminal |

@@ -24,7 +24,10 @@ struct TabStrip: View {
                     TabButton(
                         session: session,
                         isSelected: session.id == store.selectedID,
-                        select: { store.selectedID = session.id },
+                        isBeside: session.id == store.layout.beside,
+                        select: { store.select(session) },
+                        openForDrag: { store.openForDrag(session) },
+                        showBeside: { store.showBeside(session) },
                         close: { store.close(session) },
                         focusTerminal: focusSelectedTerminal
                     )
@@ -91,7 +94,11 @@ private struct TabButton: View {
     @Environment(\.chrome) private var chrome
     let session: TerminalSession
     let isSelected: Bool
+    /// Showing on the other side of a split window.
+    let isBeside: Bool
     let select: () -> Void
+    let openForDrag: () -> Void
+    let showBeside: () -> Void
     let close: () -> Void
     let focusTerminal: () -> Void
     @State private var isHovering = false
@@ -145,6 +152,9 @@ private struct TabButton: View {
         .overlay(alignment: .bottom) {
             if isSelected {
                 Rectangle().fill(chrome.accent).frame(height: 2)
+            } else if isBeside {
+                // The other visible tab: a thinner, dimmer underline.
+                Rectangle().fill(chrome.accent.opacity(0.45)).frame(height: 1)
             }
         }
         .overlay {
@@ -163,7 +173,7 @@ private struct TabButton: View {
         .task(id: isDropTargeted) {
             guard isDropTargeted, !isSelected else { return }
             try? await Task.sleep(for: .milliseconds(500))
-            if isDropTargeted, !Task.isCancelled { select() }
+            if isDropTargeted, !Task.isCancelled { openForDrag() }
         }
         // Alongside the single tap, so selecting stays instant.
         .simultaneousGesture(TapGesture(count: 2).onEnded { isRenaming = true })
@@ -185,6 +195,10 @@ private struct TabButton: View {
     }
 
     @ViewBuilder private var menu: some View {
+        if !isSelected && !isBeside {
+            Button("Show Beside", action: showBeside)
+            Divider()
+        }
         Button("Rename Tab…") { isRenaming = true }
         Picker("Tab Colour", selection: Binding(
             get: { session.tabColor },
@@ -214,6 +228,7 @@ private struct TabButton: View {
 
     private var accessibilityText: String {
         var parts = [session.title, statusText]
+        if isBeside { parts.append("shown beside") }
         if session.tabColor != .none { parts.append("\(session.tabColor.displayName.lowercased()) tab") }
         if session.isLogging { parts.append("logging") }
         return parts.joined(separator: ", ")

@@ -63,6 +63,8 @@ final class TerminalSession: Identifiable {
     /// Set by the session store, so a row dragged from a host pane can be
     /// checked against this tab's host.
     @ObservationIgnored var remoteTarget: ((UUID) -> SSHTarget?)?
+    /// Called after a drop typed into this tab, so the store can focus it.
+    @ObservationIgnored var didAcceptDrop: (() -> Void)?
     /// Set for a file browser tab, which shows this instead of the terminal.
     let files: FileBrowser?
     /// Set for a serial console tab: the port and its settings.
@@ -123,6 +125,7 @@ final class TerminalSession: Identifiable {
         appearance.apply(to: terminalView)
         terminalView.terminalDelegate = self
         terminalView.dropText = { [weak self] pasteboard in self?.textForDrop(pasteboard) }
+        terminalView.onDropAccepted = { [weak self] in self?.didAcceptDrop?() }
     }
 
     /// What a drop on this tab types, or nil to refuse it. Only ssh and sftp
@@ -173,7 +176,7 @@ final class TerminalSession: Identifiable {
             }
             guard let text = textForDrop(fileURLs: urls, strings: strings), !text.isEmpty else { return }
             terminalView.pasteText(text)
-            terminalView.window?.makeFirstResponder(terminalView)
+            didAcceptDrop?()
         }
     }
 

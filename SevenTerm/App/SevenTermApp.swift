@@ -103,6 +103,11 @@ struct SevenTermApp: App {
                     .disabled(!appearance.canMakeSmaller)
                 Button("Actual Size") { appearance.resetSize() }
                     .keyboardShortcut("0", modifiers: .command)
+                Divider()
+                Button(sessions.beside == nil ? "Show Side by Side" : "Show One Tab") { sessions.toggleSideBySide() }
+                    .keyboardShortcut("s", modifiers: [.option, .command])
+                    .disabled(!sessions.canToggleSideBySide)
+                Divider()
                 Picker("Theme", selection: Binding(
                     get: { appearance.paletteID },
                     set: { appearance.paletteID = $0 }
@@ -185,10 +190,10 @@ struct SevenTermApp: App {
                 Divider()
                 Button("Show Next Tab") { sessions.selectNext() }
                     .keyboardShortcut("]", modifiers: [.command, .shift])
-                    .disabled(sessions.sessions.count < 2)
+                    .disabled(!sessions.canStep)
                 Button("Show Previous Tab") { sessions.selectPrevious() }
                     .keyboardShortcut("[", modifiers: [.command, .shift])
-                    .disabled(sessions.sessions.count < 2)
+                    .disabled(!sessions.canStep)
             }
         }
 
