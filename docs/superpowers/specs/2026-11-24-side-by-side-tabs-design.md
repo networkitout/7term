@@ -16,7 +16,7 @@ All of this is Claude's proposal for the user to approve.
 
 **Splitting**
 - Right-click a tab that isn't showing ▸ **Show Beside**: the window splits, the tab you were on stays on the left, and the clicked tab opens on the right with the focus.
-- **View ▸ Show Side by Side** (⌥⌘S) does the same with the tab you used before the current one. With only one tab open it's greyed out.
+- **View ▸ Show Side by Side** (⌥⌘S) shows the tab you used before the current one on the right (or the next tab, if that one has closed). The current tab stays on the left and keeps the focus, since you're working in it. With only one tab open it's greyed out. (Refined while building.)
 - **View ▸ Show One Tab** (⌥⌘S again, the same command toggling) goes back to one pane, keeping the focused tab.
 - A tab can only show on one side at a time.
 
