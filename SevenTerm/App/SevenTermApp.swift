@@ -103,6 +103,11 @@ struct SevenTermApp: App {
                     .disabled(!appearance.canMakeSmaller)
                 Button("Actual Size") { appearance.resetSize() }
                     .keyboardShortcut("0", modifiers: .command)
+                Divider()
+                Button(sessions.beside == nil ? "Show Side by Side" : "Show One Tab") { sessions.toggleSideBySide() }
+                    .keyboardShortcut("s", modifiers: [.option, .command])
+                    .disabled(!sessions.canToggleSideBySide)
+                Divider()
                 Picker("Theme", selection: Binding(
                     get: { appearance.paletteID },
                     set: { appearance.paletteID = $0 }

@@ -52,7 +52,7 @@ struct MainView: View {
     }
 }
 
-/// Tab strip over the selected terminal.
+/// Tab strip over one session, or two side by side.
 private struct SessionArea: View {
     @Environment(SessionStore.self) private var store
     @Environment(Appearance.self) private var appearance
@@ -67,12 +67,16 @@ private struct SessionArea: View {
             }
             ZStack {
                 appearance.palette.background.swiftUIColor
-                if let session = store.selected, let files = session.files {
-                    FileBrowserView(browser: files)
-                        .id(session.id)
-                } else if let session = store.selected {
-                    TerminalHost(session: session)
-                        .id(session.id)
+                if let left = store.session(id: store.layout.left) {
+                    if let right = store.session(id: store.layout.right) {
+                        // Equal ideal widths, so each split starts in the middle.
+                        HSplitView {
+                            SessionPane(session: left).frame(minWidth: 320, idealWidth: 10_000, maxWidth: .infinity)
+                            SessionPane(session: right).frame(minWidth: 320, idealWidth: 10_000, maxWidth: .infinity)
+                        }
+                    } else {
+                        SessionPane(session: left)
+                    }
                 } else {
                     EmptyState()
                 }
@@ -84,6 +88,25 @@ private struct SessionArea: View {
                 openSerial: { path, settings in store.openSerial(path: path, settings: settings) }
             )
         }
+    }
+}
+
+/// One side of the window: a terminal or a file browser. A click anywhere in
+/// it focuses that side when the window is split.
+private struct SessionPane: View {
+    @Environment(SessionStore.self) private var store
+    let session: TerminalSession
+
+    var body: some View {
+        Group {
+            if let files = session.files {
+                FileBrowserView(browser: files)
+            } else {
+                TerminalHost(session: session)
+            }
+        }
+        .id(session.id)
+        .background(PaneClickMonitor { store.select(session) })
     }
 }
 

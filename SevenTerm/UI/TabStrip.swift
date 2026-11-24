@@ -24,7 +24,9 @@ struct TabStrip: View {
                     TabButton(
                         session: session,
                         isSelected: session.id == store.selectedID,
-                        select: { store.selectedID = session.id },
+                        isBeside: session.id == store.layout.beside,
+                        select: { store.select(session) },
+                        showBeside: { store.showBeside(session) },
                         close: { store.close(session) },
                         focusTerminal: focusSelectedTerminal
                     )
@@ -91,7 +93,10 @@ private struct TabButton: View {
     @Environment(\.chrome) private var chrome
     let session: TerminalSession
     let isSelected: Bool
+    /// Showing on the other side of a split window.
+    let isBeside: Bool
     let select: () -> Void
+    let showBeside: () -> Void
     let close: () -> Void
     let focusTerminal: () -> Void
     @State private var isHovering = false
@@ -145,6 +150,9 @@ private struct TabButton: View {
         .overlay(alignment: .bottom) {
             if isSelected {
                 Rectangle().fill(chrome.accent).frame(height: 2)
+            } else if isBeside {
+                // The other visible tab: a thinner, dimmer underline.
+                Rectangle().fill(chrome.accent.opacity(0.45)).frame(height: 1)
             }
         }
         .overlay {
@@ -185,6 +193,10 @@ private struct TabButton: View {
     }
 
     @ViewBuilder private var menu: some View {
+        if !isSelected && !isBeside {
+            Button("Show Beside", action: showBeside)
+            Divider()
+        }
         Button("Rename Tab…") { isRenaming = true }
         Picker("Tab Colour", selection: Binding(
             get: { session.tabColor },

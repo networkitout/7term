@@ -2,12 +2,15 @@ import AppKit
 import Observation
 import SevenTermCore
 
-/// The open tabs, in order, and which one is showing.
+/// The open tabs, in order, and which one or two are showing.
 @MainActor
 @Observable
 final class SessionStore {
     private(set) var sessions: [TerminalSession] = []
-    var selectedID: TerminalSession.ID?
+    /// Which tabs show: the focused one, and the one beside it when split.
+    private(set) var layout = TabLayout<TerminalSession.ID>()
+    /// The focused tab: the one commands act on and new tabs replace.
+    var selectedID: TerminalSession.ID? { layout.focused }
     var isQuickConnectPresented = false
 
     @ObservationIgnored let appearance: Appearance
@@ -25,7 +28,37 @@ final class SessionStore {
     }
 
     var selected: TerminalSession? {
-        sessions.first { $0.id == selectedID }
+        session(id: layout.focused)
+    }
+
+    /// The other visible tab when the window is split.
+    var beside: TerminalSession? {
+        session(id: layout.beside)
+    }
+
+    func session(id: TerminalSession.ID?) -> TerminalSession? {
+        guard let id else { return nil }
+        return sessions.first { $0.id == id }
+    }
+
+    /// A tab clicked in the tab bar, or a pane clicked: the other visible tab
+    /// takes the focus; a hidden tab replaces the focused side.
+    func select(_ session: TerminalSession) {
+        layout.select(session.id)
+    }
+
+    /// Right-click a tab ▸ Show Beside.
+    func showBeside(_ session: TerminalSession) {
+        layout.showBeside(session.id)
+    }
+
+    /// View ▸ Show Side by Side / Show One Tab (⌥⌘S).
+    var canToggleSideBySide: Bool {
+        layout.canToggleSideBySide(tabs: sessions.map(\.id))
+    }
+
+    func toggleSideBySide() {
+        layout.toggleSideBySide(tabs: sessions.map(\.id))
     }
 
     var runningCount: Int {
@@ -99,7 +132,7 @@ final class SessionStore {
             self?.sessions.first { $0.files?.id == browserID }?.target
         }
         sessions.append(session)
-        selectedID = session.id
+        layout.select(session.id)
         session.start()
     }
 
@@ -111,7 +144,7 @@ final class SessionStore {
             logByDefault: logByDefault, serial: (path, settings), appearance: appearance
         )
         sessions.append(session)
-        selectedID = session.id
+        layout.select(session.id)
         session.start()
     }
 
@@ -125,9 +158,7 @@ final class SessionStore {
         session.stop()
         guard let index = sessions.firstIndex(where: { $0.id == session.id }) else { return }
         sessions.remove(at: index)
-        if selectedID == session.id {
-            selectedID = sessions.isEmpty ? nil : sessions[min(index, sessions.count - 1)].id
-        }
+        layout.closed(session.id, remaining: sessions.map(\.id), index: index)
     }
 
     /// ⌘W: closes the current tab, or the window when no tabs are open.
@@ -150,11 +181,8 @@ final class SessionStore {
     func selectNext() { step(by: 1) }
     func selectPrevious() { step(by: -1) }
 
+    /// The focused side steps through the tabs, skipping the other side's.
     private func step(by offset: Int) {
-        guard !sessions.isEmpty,
-              let current = sessions.firstIndex(where: { $0.id == selectedID })
-        else { return }
-        let next = (current + offset + sessions.count) % sessions.count
-        selectedID = sessions[next].id
+        layout.step(by: offset, tabs: sessions.map(\.id))
     }
 }
