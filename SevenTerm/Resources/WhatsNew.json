@@ -8,7 +8,7 @@
       },
       {
         "title": "Drop a folder to type its path",
-        "detail": "Type cd and a space, then drag a folder from Finder into a terminal: its path appears, ready for Return. Drag from a file browser's host pane to get the path on the server."
+        "detail": "Type cd and a space, then drag a folder from Finder into a terminal: its path appears, ready for Return. Drag from a file browser's host pane onto a terminal for the same host to get the path on the server."
       },
       {
         "title": "Tabs open while you drag",

@@ -32,29 +32,42 @@ final class WhatsNewCenter {
         return entries
     }
 
-    /// At launch: shows what changed since the last version shown, then
-    /// remembers this version. `isExistingUser` must be worked out before
-    /// anything first-run marks the app as used.
+    /// At launch: shows what changed since the last version shown. This
+    /// version is remembered once the sheet closes (straight away when there's
+    /// nothing to show), and the remembered version never goes down.
+    /// `isExistingUser` must be worked out before anything first-run marks the
+    /// app as used.
     func checkAtLaunch(isExistingUser: Bool) {
+        let all = Self.bundledEntries
+        // Unreadable notes: remember nothing, so a fixed file in the next
+        // release still shows them.
+        guard !all.isEmpty else { return }
+        let lastSeen = UserDefaults.standard.string(forKey: Self.lastSeenKey)
+        let entries = WhatsNew.entriesToShow(all, lastSeen: lastSeen, current: Self.currentVersion, isExistingUser: isExistingUser)
+        guard !entries.isEmpty else {
+            rememberCurrentVersion()
+            return
+        }
+        shown = Presentation(title: "What's New in 7 Term \(Self.currentVersion)", entries: entries)
+    }
+
+    /// The launch sheet closed.
+    func dismiss() {
+        shown = nil
+        rememberCurrentVersion()
+    }
+
+    private func rememberCurrentVersion() {
         let defaults = UserDefaults.standard
-        let current = Self.currentVersion
-        let entries = WhatsNew.entriesToShow(
-            Self.bundledEntries,
-            lastSeen: defaults.string(forKey: Self.lastSeenKey),
-            current: current,
-            isExistingUser: isExistingUser
-        )
-        defaults.set(current, forKey: Self.lastSeenKey)
-        guard !entries.isEmpty else { return }
-        shown = Presentation(title: "What's New in 7 Term \(current)", entries: entries)
+        let version = WhatsNew.versionToRemember(lastSeen: defaults.string(forKey: Self.lastSeenKey), current: Self.currentVersion)
+        defaults.set(version, forKey: Self.lastSeenKey)
     }
 
     /// Help ▸ What's New: every version's notes up to this one. A local build
     /// (whose version predates every entry) shows them all.
-    func showHistory() {
-        let all = Self.bundledEntries
-        var entries = WhatsNew.history(all, current: Self.currentVersion)
-        if entries.isEmpty { entries = WhatsNew.history(all, current: "999") }
-        shown = Presentation(title: "What's New in 7 Term", entries: entries)
+    static var history: [WhatsNewEntry] {
+        let all = bundledEntries
+        let entries = WhatsNew.history(all, current: currentVersion)
+        return entries.isEmpty ? WhatsNew.history(all, current: "999") : entries
     }
 }

@@ -74,7 +74,7 @@ struct SevenTermApp: App {
                 Button("Restore from Backup…") { backup.chooseAndRestore() }
             }
             CommandGroup(replacing: .help) {
-                HelpMenuButton(whatsNew: whatsNew)
+                HelpMenuButton()
             }
             // Edit ▸ Find: SwiftTerm's find bar over the current terminal tab.
             CommandGroup(after: .pasteboard) {
@@ -199,6 +199,15 @@ struct SevenTermApp: App {
             }
         }
 
+        Window("What's New", id: "whats-new") {
+            WhatsNewSheet(presentation: .init(title: "What's New in 7 Term", entries: WhatsNewCenter.history)) {
+                NSApp.keyWindow?.performClose(nil)
+            }
+            .environment(\.chrome, Chrome.forPalette(id: appearance.paletteID))
+            .tint(Chrome.forPalette(id: appearance.paletteID).accent)
+        }
+        .windowResizability(.contentSize)
+
         Window("7 Term Help", id: "help") {
             HelpView()
                 .environment(appearance)
@@ -224,11 +233,10 @@ struct SevenTermApp: App {
 /// Help ▸ 7 Term Help (⌘?). A view, so it can open the help window.
 private struct HelpMenuButton: View {
     @Environment(\.openWindow) private var openWindow
-    let whatsNew: WhatsNewCenter
 
     var body: some View {
         Button("7 Term Help") { openWindow(id: "help") }
             .keyboardShortcut("?", modifiers: .command)
-        Button("What's New…") { whatsNew.showHistory() }
+        Button("What's New…") { openWindow(id: "whats-new") }
     }
 }

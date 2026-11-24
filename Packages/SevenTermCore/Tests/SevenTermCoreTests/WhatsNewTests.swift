@@ -47,4 +47,12 @@ import Testing
         let decoded = try WhatsNew.decode(Data(json.utf8))
         #expect(decoded == [WhatsNewEntry(version: "1.6.0", items: [.init(title: "T", detail: "D")])])
     }
+
+    @Test func theRememberedVersionOnlyEverRises() {
+        #expect(WhatsNew.versionToRemember(lastSeen: nil, current: "1.6.0") == "1.6.0")
+        #expect(WhatsNew.versionToRemember(lastSeen: "1.5.0", current: "1.6.0") == "1.6.0")
+        // A local build (1.0.0) or a downgrade must not bring old notes back.
+        #expect(WhatsNew.versionToRemember(lastSeen: "1.6.0", current: "1.0.0") == "1.6.0")
+        #expect(WhatsNew.versionToRemember(lastSeen: "1.10.0", current: "1.9.0") == "1.10.0")
+    }
 }

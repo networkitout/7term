@@ -49,13 +49,14 @@ struct MainView: View {
             SpreadsheetImportSheet()
         }
         .sheet(item: $whatsNew.shown) { presentation in
-            WhatsNewSheet(presentation: presentation) { whatsNew.shown = nil }
+            WhatsNewSheet(presentation: presentation) { whatsNew.dismiss() }
         }
         .task {
             // Before the first-run offer, which marks the app as used.
             let usedBefore = hosts.hasBeenUsedBefore
             hosts.offerImportIfFirstRun()
-            whatsNew.checkAtLaunch(isExistingUser: usedBefore)
+            // One launch sheet at a time: the import offer wins.
+            if !hosts.isImportPresented { whatsNew.checkAtLaunch(isExistingUser: usedBefore) }
         }
         // Outermost, so every view and sheet in the window gets it.
         .environment(\.chrome, chrome)

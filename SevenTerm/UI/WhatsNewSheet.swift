@@ -1,7 +1,9 @@
 import SwiftUI
 import SevenTermCore
 
-/// The release notes after an update, and from Help ▸ What's New.
+/// The release notes after an update (a sheet on the main window), and in
+/// Help ▸ What's New (a window of its own, so it never competes with another
+/// sheet).
 struct WhatsNewSheet: View {
     @Environment(\.chrome) private var chrome
     let presentation: WhatsNewCenter.Presentation
@@ -15,7 +17,7 @@ struct WhatsNewSheet: View {
                 .padding(.bottom, 12)
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    ForEach(presentation.entries, id: \.version) { entry in
+                    ForEach(Array(presentation.entries.enumerated()), id: \.offset) { _, entry in
                         VStack(alignment: .leading, spacing: 10) {
                             // With several versions, say which is which.
                             if presentation.entries.count > 1 {
@@ -23,7 +25,7 @@ struct WhatsNewSheet: View {
                                     .font(Brand.mono(11, weight: .bold))
                                     .foregroundStyle(chrome.accent)
                             }
-                            ForEach(entry.items, id: \.title) { item in
+                            ForEach(Array(entry.items.enumerated()), id: \.offset) { _, item in
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(item.title).font(.system(size: 13, weight: .semibold))
                                     Text(item.detail)
@@ -48,6 +50,6 @@ struct WhatsNewSheet: View {
             .padding(14)
         }
         .frame(width: 460)
-        .frame(minHeight: 220, maxHeight: 560)
+        .frame(minHeight: 220, idealHeight: 440, maxHeight: 560)
     }
 }

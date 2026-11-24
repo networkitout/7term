@@ -42,6 +42,14 @@ public enum WhatsNew {
         }
     }
 
+    /// The version to remember as shown: never lower than before, so running
+    /// a local build (versioned 1.0.0) or an older copy doesn't bring notes
+    /// back that were already shown.
+    public static func versionToRemember(lastSeen: String?, current: String) -> String {
+        guard let lastSeen, compare(lastSeen, current) == .orderedDescending else { return current }
+        return lastSeen
+    }
+
     /// Help ▸ What's New: every entry up to the running version, newest first.
     public static func history(_ entries: [WhatsNewEntry], current: String) -> [WhatsNewEntry] {
         entries
