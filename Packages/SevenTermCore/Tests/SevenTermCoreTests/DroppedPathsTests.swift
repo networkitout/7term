@@ -30,9 +30,19 @@ import Testing
         #expect(DroppedPaths.typedText(for: ["/Users/me/Café 😀"]) == "/Users/me/Café\\ 😀 ")
     }
 
-    @Test func controlCharactersSwitchToSingleQuotes() {
-        #expect(DroppedPaths.typedText(for: ["/tmp/a\nb"]) == "'/tmp/a\nb' ")
-        #expect(DroppedPaths.typedText(for: ["/tmp/it's\tx"]) == "'/tmp/it'\\''s\tx' ")
+    /// Typed into a pty, control bytes act as they arrive (^U erases the line,
+    /// CR submits it), whatever quoting surrounds them, so such a path is refused.
+    @Test func controlCharactersRefuseTheDrop() {
+        for scalar in [0x0A, 0x0D, 0x09, 0x03, 0x15, 0x0F, 0x1B, 0x7F, 0x85, 0x9B] as [UInt32] {
+            let character = String(Character(Unicode.Scalar(scalar)!))
+            #expect(DroppedPaths.typedText(for: ["/tmp/x\(character)id"]) == nil, "U+\(String(scalar, radix: 16))")
+        }
+        #expect(DroppedPaths.typedText(for: ["/ok", "/tmp/bad\u{15}"]) == nil)
+    }
+
+    @Test func emojiJoinersAreNotControlCharacters() {
+        let family = "/tmp/👨‍👩‍👧"
+        #expect(DroppedPaths.typedText(for: [family]) == family + " ")
     }
 
     @Test func severalPathsAreSeparatedBySpaces() {

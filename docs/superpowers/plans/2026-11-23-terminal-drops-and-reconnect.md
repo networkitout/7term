@@ -14,7 +14,7 @@
 
 ## Review Focus
 
-1. A path with a newline or other control character: must arrive single-quoted, never able to run a command. (Task 1 test.)
+1. A path with a newline or other control character: the whole drop is refused, since control bytes act as they're typed whatever the quoting. (Task 1 test; changed after review.)
 2. A host-pane drag onto a tab for a different machine: refused. (Task 1 test for same-machine; manual check.)
 3. Text dragged in from another app: refused, not typed. (Task 3 manual check.)
 4. A drop on an ended tab: refused. (Task 3 manual check.)

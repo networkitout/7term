@@ -4,17 +4,22 @@ import Foundation
 /// for a shell the way Terminal does, separated by spaces, with a space after
 /// the last so the next word can follow. Return is never part of it.
 public enum DroppedPaths {
-    public static func typedText(for paths: [String]) -> String {
-        paths.map(escape).map { $0 + " " }.joined()
+    /// Nil when any path holds a control character: typed into a terminal,
+    /// those act as they arrive (^U erases the line, CR submits it), whatever
+    /// quoting surrounds them, so a crafted file name could run a command.
+    public static func typedText(for paths: [String]) -> String? {
+        guard !paths.contains(where: hasControlCharacter) else { return nil }
+        return paths.map(escape).map { $0 + " " }.joined()
     }
 
-    /// A backslash before anything a shell treats specially. A path holding a
-    /// control character (a line break, a tab) is single-quoted instead, since
-    /// a backslash before a newline would only continue the line.
+    /// C0 controls, DEL and C1 controls. Format characters such as the
+    /// zero-width joiner inside some emoji are fine.
+    static func hasControlCharacter(_ path: String) -> Bool {
+        path.unicodeScalars.contains { $0.value < 0x20 || (0x7F...0x9F).contains($0.value) }
+    }
+
+    /// A backslash before anything a shell treats specially.
     static func escape(_ path: String) -> String {
-        if path.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) {
-            return "'" + path.replacingOccurrences(of: "'", with: "'\\''") + "'"
-        }
         var result = ""
         for scalar in path.unicodeScalars {
             if !isSafe(scalar) { result.append("\\") }

@@ -129,6 +129,7 @@ As in Terminal, you can type `cd ` and then drag a folder onto the tab: its path
 - **From Finder** you get the path on this Mac. That's what the `sftp>` prompt wants for `put` and `lcd`. In a terminal on a server it only helps if the same path exists there.
 - **From the file browser's host pane** (an SFTP tab) you get the path on the server. Drag a folder from there onto a terminal tab connected to the same host to `cd` into it. A drop onto a tab for a different host is refused, since the path wouldn't exist there.
 - Drops work on terminal and `sftp>` tabs while they're connected, not on serial consoles or ended tabs. 7 Term never presses Return for you.
+- A name containing a hidden control character, such as a line break, is refused, because the terminal would act on it as it was typed.
 
 **Right-click a host** for more options: **SFTP Prompt** opens the classic `sftp>` command line, and **Open in Transmit/ForkLift** appears if one of those apps is installed.
 

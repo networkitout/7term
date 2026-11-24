@@ -221,6 +221,7 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 <li><strong>From Finder</strong> you get the path on this Mac. That's what the <code>sftp&gt;</code> prompt wants for <code>put</code> and <code>lcd</code>. In a terminal on a server it only helps if the same path exists there.</li>
 <li><strong>From the file browser's host pane</strong> (an SFTP tab) you get the path on the server. Drag a folder from there onto a terminal tab connected to the same host to <code>cd</code> into it. A drop onto a tab for a different host is refused, since the path wouldn't exist there.</li>
 <li>Drops work on terminal and <code>sftp&gt;</code> tabs while they're connected, not on serial consoles or ended tabs. 7 Term never presses Return for you.</li>
+<li>A name containing a hidden control character, such as a line break, is refused, because the terminal would act on it as it was typed.</li>
 </ul>
 <p><strong>Right-click a host</strong> for more options: <strong>SFTP Prompt</strong> opens the classic <code>sftp&gt;</code> command line, and <strong>Open in Transmit/ForkLift</strong> appears if one of those apps is installed.</p>
 <h2 id="serial-consoles">Serial consoles</h2>

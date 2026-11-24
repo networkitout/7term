@@ -121,9 +121,7 @@ final class TerminalSession: Identifiable {
         files = kind == .files ? FileBrowser(target: target, keychainHost: keychainHost) : nil
         appearance.apply(to: terminalView)
         terminalView.terminalDelegate = self
-        terminalView.dropText = { [weak self] pasteboard in
-            MainActor.assumeIsolated { self?.textForDrop(pasteboard) }
-        }
+        terminalView.dropText = { [weak self] pasteboard in self?.textForDrop(pasteboard) }
     }
 
     /// What a drop on this tab types, or nil to refuse it. Only ssh and sftp
@@ -132,6 +130,7 @@ final class TerminalSession: Identifiable {
     /// - Finder items (and the file browser's Mac pane): their Mac paths.
     /// - Rows from a file browser's host pane: their server paths, only when
     ///   that browser is connected to the same machine as this tab.
+    /// A name holding a control character refuses the whole drop.
     func textForDrop(_ pasteboard: NSPasteboard) -> String? {
         guard state == .running, kind == .ssh || kind == .sftp else { return nil }
         if let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL],
