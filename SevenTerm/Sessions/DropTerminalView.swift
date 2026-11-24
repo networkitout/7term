@@ -9,6 +9,8 @@ import SwiftTerm
 final class DropTerminalView: TerminalView {
     /// The text to type for what's on the pasteboard, or nil to refuse it.
     var dropText: (@MainActor (NSPasteboard) -> String?)?
+    /// Called after a drop has been typed.
+    var onDropAccepted: (@MainActor () -> Void)?
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -31,7 +33,7 @@ final class DropTerminalView: TerminalView {
     override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
         guard let text = dropText?(sender.draggingPasteboard), !text.isEmpty else { return false }
         pasteText(text)
-        window?.makeFirstResponder(self)
+        onDropAccepted?()
         return true
     }
 }

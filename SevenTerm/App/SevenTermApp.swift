@@ -190,10 +190,10 @@ struct SevenTermApp: App {
                 Divider()
                 Button("Show Next Tab") { sessions.selectNext() }
                     .keyboardShortcut("]", modifiers: [.command, .shift])
-                    .disabled(sessions.sessions.count < 2)
+                    .disabled(!sessions.canStep)
                 Button("Show Previous Tab") { sessions.selectPrevious() }
                     .keyboardShortcut("[", modifiers: [.command, .shift])
-                    .disabled(sessions.sessions.count < 2)
+                    .disabled(!sessions.canStep)
             }
         }
 

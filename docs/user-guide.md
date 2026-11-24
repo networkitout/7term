@@ -132,6 +132,7 @@ To see two sessions at once, right-click a tab and choose **Show Beside**: the t
 - Drag the divider to resize; each side keeps a minimum width.
 - **View ▸ Show One Tab** (⌥⌘S again) goes back to one tab, as does closing either visible tab.
 - Drags between the two sides work directly, for example a folder from a file browser on one side into a terminal on the other.
+- Holding a drag over a hidden tab while split opens it beside the side you're dragging from.
 
 ### Dropping paths into a terminal
 

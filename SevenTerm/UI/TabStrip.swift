@@ -26,6 +26,7 @@ struct TabStrip: View {
                         isSelected: session.id == store.selectedID,
                         isBeside: session.id == store.layout.beside,
                         select: { store.select(session) },
+                        openForDrag: { store.openForDrag(session) },
                         showBeside: { store.showBeside(session) },
                         close: { store.close(session) },
                         focusTerminal: focusSelectedTerminal
@@ -96,6 +97,7 @@ private struct TabButton: View {
     /// Showing on the other side of a split window.
     let isBeside: Bool
     let select: () -> Void
+    let openForDrag: () -> Void
     let showBeside: () -> Void
     let close: () -> Void
     let focusTerminal: () -> Void
@@ -171,7 +173,7 @@ private struct TabButton: View {
         .task(id: isDropTargeted) {
             guard isDropTargeted, !isSelected else { return }
             try? await Task.sleep(for: .milliseconds(500))
-            if isDropTargeted, !Task.isCancelled { select() }
+            if isDropTargeted, !Task.isCancelled { openForDrag() }
         }
         // Alongside the single tap, so selecting stays instant.
         .simultaneousGesture(TapGesture(count: 2).onEnded { isRenaming = true })
@@ -226,6 +228,7 @@ private struct TabButton: View {
 
     private var accessibilityText: String {
         var parts = [session.title, statusText]
+        if isBeside { parts.append("shown beside") }
         if session.tabColor != .none { parts.append("\(session.tabColor.displayName.lowercased()) tab") }
         if session.isLogging { parts.append("logging") }
         return parts.joined(separator: ", ")

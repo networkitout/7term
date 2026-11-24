@@ -8,6 +8,9 @@ public struct TabLayout<ID: Hashable>: Equatable {
     public private(set) var besideOnLeft = true
     /// The tab focused before the current one, for Show Side by Side.
     private var previous: ID?
+    /// Which side `previous` was on when the split last ended, so splitting
+    /// again with the same pair puts each tab back where it was.
+    private var previousWasOnLeft: Bool?
 
     public init() {}
 
@@ -23,11 +26,13 @@ public struct TabLayout<ID: Hashable>: Equatable {
     public mutating func select(_ id: ID) {
         guard id != focused else { return }
         if id == beside {
+            previous = focused
             beside = focused
             besideOnLeft.toggle()
             focused = id
         } else {
             previous = focused
+            previousWasOnLeft = nil
             focused = id
         }
     }
@@ -40,6 +45,7 @@ public struct TabLayout<ID: Hashable>: Equatable {
         besideOnLeft = isSplit ? !besideOnLeft : true
         beside = current
         previous = current
+        previousWasOnLeft = nil
         focused = id
     }
 
@@ -49,24 +55,29 @@ public struct TabLayout<ID: Hashable>: Equatable {
 
     /// Back to one pane (keeping the focused tab), or split with the tab used
     /// before the current one, falling back to the next tab. The focus stays
-    /// on the current tab, which keeps the left side.
+    /// on the current tab. Splitting again with the pair just shown puts each
+    /// tab back on its side; otherwise the current tab takes the left.
     public mutating func toggleSideBySide(tabs: [ID]) {
-        if isSplit { beside = nil; return }
-        guard let current = focused, let index = tabs.firstIndex(of: current), tabs.count >= 2 else { return }
-        let candidate: ID
-        if let previous, previous != current, tabs.contains(previous) {
-            candidate = previous
-        } else {
-            candidate = tabs[(index + 1) % tabs.count]
+        if isSplit {
+            previous = beside
+            previousWasOnLeft = besideOnLeft
+            beside = nil
+            return
         }
-        beside = candidate
-        besideOnLeft = false
+        guard let current = focused, let index = tabs.firstIndex(of: current), tabs.count >= 2 else { return }
+        if let previous, previous != current, tabs.contains(previous) {
+            beside = previous
+            besideOnLeft = previousWasOnLeft ?? false
+        } else {
+            beside = tabs[(index + 1) % tabs.count]
+            besideOnLeft = false
+        }
     }
 
     /// A tab was closed. `remaining` is the tab list without it; `index` is
     /// where it was. Closing either visible tab goes back to one pane.
     public mutating func closed(_ id: ID, remaining: [ID], index: Int) {
-        if previous == id { previous = nil }
+        if previous == id { previous = nil; previousWasOnLeft = nil }
         if id == beside {
             beside = nil
         } else if id == focused {
@@ -88,6 +99,7 @@ public struct TabLayout<ID: Hashable>: Equatable {
         let next = candidates[((index + offset) % count + count) % count]
         guard next != current else { return }
         previous = current
+        previousWasOnLeft = nil
         focused = next
     }
 }

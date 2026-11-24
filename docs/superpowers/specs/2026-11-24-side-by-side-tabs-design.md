@@ -1,6 +1,6 @@
 # Side-by-side tabs: design
 
-Status: proposed, waiting for the user's approval.
+Status: approved 2026-11-24; built, with the changes from review noted below.
 
 ## Why
 
@@ -30,14 +30,20 @@ All of this is Claude's proposal for the user to approve.
 - Stays one row for all tabs. The focused side's tab has the usual accent underline; the other visible tab has a thinner, dimmer one, so you can see which two are showing.
 - Clicking a tab that isn't showing puts it in the focused side. Clicking the other visible tab focuses its side.
 
+**The keyboard**
+- The current tab's terminal always has the keyboard, however the current tab changed (a click in a pane, a tab click, a drop, a new tab), so typing and ⌘W always mean the same tab. (Added after review.)
+
+**Turning it off and on**
+- ⌥⌘S twice brings back the same two tabs, each on the side it was on. (Added after review.)
+
 **Closing**
 - Closing either visible tab goes back to one pane, showing the other.
 
 **The divider**
-- Starts in the middle and can be dragged; each side keeps at least 320 points. It resets to the middle each time you split.
+- Starts in the middle and can be dragged; each side keeps at least 280 points (lowered from 320 so a split fits the window's minimum width; in a narrower window both sides shrink). It resets to the middle each time you split.
 
 **Unchanged**
-- Drag and drop between the sides works directly (it already works on any visible terminal). Hover-to-open in the tab bar still works and puts the tab in the focused side.
+- Drag and drop between the sides works directly (it already works on any visible terminal), and a drop makes that side the current one. Hover-to-open in the tab bar still works: in one pane it replaces the tab; when split it opens the tab beside the one you're dragging from, so the source stays put (changed after review).
 - Nothing about splits is saved between launches (tabs aren't either).
 
 ## Non-goals

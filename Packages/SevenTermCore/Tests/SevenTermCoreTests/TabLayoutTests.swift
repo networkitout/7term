@@ -2,7 +2,9 @@ import Testing
 @testable import SevenTermCore
 
 @Suite struct TabLayoutTests {
-    private func layout(focused: String, tabs: [String] = ["a", "b", "c", "d"]) -> TabLayout<String> {
+    private let tabs = ["a", "b", "c", "d"]
+
+    private func layout(focused: String) -> TabLayout<String> {
         var layout = TabLayout<String>()
         layout.select(focused)
         return layout
@@ -138,5 +140,48 @@ import Testing
         var l = layout(focused: "d")
         l.step(by: 1, tabs: ["a", "b", "c", "d"])
         #expect(l.focused == "a")
+    }
+
+    @Test func toggleTwiceBringsBackTheSamePairAfterSwappingFocus() {
+        var l = layout(focused: "a")
+        l.showBeside("c")          // a | c*
+        l.select("a")              // a* | c
+        l.toggleSideBySide(tabs: tabs)
+        #expect(!l.isSplit)
+        #expect(l.focused == "a")
+        l.toggleSideBySide(tabs: tabs)
+        #expect(l.left == "a")
+        #expect(l.right == "c")
+        #expect(l.focused == "a")
+    }
+
+    @Test func toggleTwiceKeepsEachTabOnItsSide() {
+        var l = layout(focused: "a")
+        l.showBeside("c")          // a | c*
+        l.toggleSideBySide(tabs: tabs)
+        #expect(l.focused == "c")
+        l.toggleSideBySide(tabs: tabs)
+        #expect(l.left == "a")
+        #expect(l.right == "c")
+        #expect(l.focused == "c")
+    }
+
+    @Test func showBesideWhileSplitReplacesTheOtherSide() {
+        var l = layout(focused: "a")
+        l.showBeside("c")          // a | c*
+        l.showBeside("d")          // the focused c stays on the right, d replaces a
+        #expect(l.left == "d")
+        #expect(l.right == "c")
+        #expect(l.focused == "d")
+    }
+
+    @Test func closingThePreviousTabWhileSplitKeepsTheSplit() {
+        var l = layout(focused: "a")
+        l.select("b")              // previous a
+        l.showBeside("c")          // b | c*, previous b
+        l.closed("a", remaining: ["b", "c", "d"], index: 0)
+        #expect(l.left == "b")
+        #expect(l.right == "c")
+        #expect(l.focused == "c")
     }
 }

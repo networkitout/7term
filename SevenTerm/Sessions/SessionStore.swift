@@ -47,6 +47,23 @@ final class SessionStore {
         layout.select(session.id)
     }
 
+    /// ⇧⌘] and ⇧⌘[ have somewhere to go: another tab besides the one on the
+    /// other side.
+    var canStep: Bool {
+        sessions.count - (layout.isSplit ? 1 : 0) >= 2
+    }
+
+    /// A drag held over a hidden tab: in one pane it replaces the tab, as a
+    /// click does; when split it opens beside, so the pane the drag started
+    /// in stays put.
+    func openForDrag(_ session: TerminalSession) {
+        if layout.isSplit, session.id != layout.focused, session.id != layout.beside {
+            layout.showBeside(session.id)
+        } else {
+            layout.select(session.id)
+        }
+    }
+
     /// Right-click a tab ▸ Show Beside.
     func showBeside(_ session: TerminalSession) {
         layout.showBeside(session.id)
@@ -130,6 +147,10 @@ final class SessionStore {
         )
         session.remoteTarget = { [weak self] browserID in
             self?.sessions.first { $0.files?.id == browserID }?.target
+        }
+        // A drop types into a tab, so that tab becomes the current one.
+        session.didAcceptDrop = { [weak self, weak session] in
+            if let session { self?.select(session) }
         }
         sessions.append(session)
         layout.select(session.id)

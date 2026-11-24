@@ -20,7 +20,12 @@ struct PaneClickMonitor: NSViewRepresentable {
 
     final class MonitorView: NSView {
         var onClick: (() -> Void)?
-        private var monitor: Any?
+        /// Only touched on the main thread; nonisolated so deinit can remove it.
+        nonisolated(unsafe) private var monitor: Any?
+
+        deinit {
+            if let monitor { NSEvent.removeMonitor(monitor) }
+        }
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
@@ -36,7 +41,8 @@ struct PaneClickMonitor: NSViewRepresentable {
         }
 
         private func noticeClick(_ event: NSEvent) {
-            guard let window, event.window === window else { return }
+            // A click refused because a sheet is open mustn't move the focus.
+            guard let window, event.window === window, window.attachedSheet == nil else { return }
             if bounds.contains(convert(event.locationInWindow, from: nil)) { onClick?() }
         }
 
