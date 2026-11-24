@@ -206,7 +206,7 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 <li><strong>Any host, without saving it:</strong> ⌘T for <strong>Quick Connect</strong>. Type <code>host</code>, <code>user@host</code> or <code>user@host:port</code>. Aliases from ssh_config work too. Click <strong>Connect</strong> for a terminal or <strong>SFTP</strong> for the file browser.</li>
 </ul>
 <p>Each connection opens in a tab. ⇧⌘] and ⇧⌘[ move between tabs, and ⌘W closes the current one.</p>
-<p>The dot on a tab is green while connected and grey after the session ends. When a session ends, press ⇧⌘R to reconnect in the same tab. If nothing answers, 7 Term gives up after 15 seconds and says so, rather than waiting in silence.</p>
+<p>The dot on a tab is green while connected and grey after the session ends. When a session ends, press ⇧⌘R, or right-click its tab and choose <strong>Reconnect</strong>, to reconnect in the same tab. If nothing answers, 7 Term gives up after 15 seconds and says so, rather than waiting in silence.</p>
 <h3 id="naming-and-colouring-tabs">Naming and colouring tabs</h3>
 <p>Several tabs to the same host look alike. To tell them apart, give a tab its own name or a colour. This works for every kind of tab: terminal, <code>sftp&gt;</code> prompt, file browser and serial console.</p>
 <ul>
@@ -215,6 +215,13 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 <li><strong>Reset Name and Colour</strong> in the same menu undoes both.</li>
 </ul>
 <p>The name is shown exactly as you type it. It replaces the title the remote shell sets, so a prompt that changes the title won't overwrite it. Hover over a renamed tab to see its usual label. Names and colours stay when you reconnect with ⇧⌘R, but they last only until you close the tab. Logs are still named after the host, never the tab.</p>
+<h3 id="dropping-paths-into-a-terminal">Dropping paths into a terminal</h3>
+<p>As in Terminal, you can type <code>cd</code> and then drag a folder onto the tab: its path appears at the prompt, ready for you to press Return. Spaces and other characters a shell treats specially are escaped (<code>My Folder</code> becomes <code>My\ Folder</code>). Drop several items to get several paths.</p>
+<ul>
+<li><strong>From Finder</strong> you get the path on this Mac. That's what the <code>sftp&gt;</code> prompt wants for <code>put</code> and <code>lcd</code>. In a terminal on a server it only helps if the same path exists there.</li>
+<li><strong>From the file browser's host pane</strong> (an SFTP tab) you get the path on the server. Drag a folder from there onto a terminal tab connected to the same host to <code>cd</code> into it. A drop onto a tab for a different host is refused, since the path wouldn't exist there.</li>
+<li>Drops work on terminal and <code>sftp&gt;</code> tabs while they're connected, not on serial consoles or ended tabs. 7 Term never presses Return for you.</li>
+</ul>
 <p><strong>Right-click a host</strong> for more options: <strong>SFTP Prompt</strong> opens the classic <code>sftp&gt;</code> command line, and <strong>Open in Transmit/ForkLift</strong> appears if one of those apps is installed.</p>
 <h2 id="serial-consoles">Serial consoles</h2>
 <p>7 Term opens USB console cables (switches, routers, firewalls, a Raspberry Pi, a Flipper Zero) in a tab, with the same logging, search, themes and text size as ssh.</p>

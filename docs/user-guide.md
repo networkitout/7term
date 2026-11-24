@@ -110,7 +110,7 @@ You get the same preview as a spreadsheet import, with the same checks and the s
 
 Each connection opens in a tab. ⇧⌘] and ⇧⌘[ move between tabs, and ⌘W closes the current one.
 
-The dot on a tab is green while connected and grey after the session ends. When a session ends, press ⇧⌘R to reconnect in the same tab. If nothing answers, 7 Term gives up after 15 seconds and says so, rather than waiting in silence.
+The dot on a tab is green while connected and grey after the session ends. When a session ends, press ⇧⌘R, or right-click its tab and choose **Reconnect**, to reconnect in the same tab. If nothing answers, 7 Term gives up after 15 seconds and says so, rather than waiting in silence.
 
 ### Naming and colouring tabs
 
@@ -121,6 +121,14 @@ Several tabs to the same host look alike. To tell them apart, give a tab its own
 - **Reset Name and Colour** in the same menu undoes both.
 
 The name is shown exactly as you type it. It replaces the title the remote shell sets, so a prompt that changes the title won't overwrite it. Hover over a renamed tab to see its usual label. Names and colours stay when you reconnect with ⇧⌘R, but they last only until you close the tab. Logs are still named after the host, never the tab.
+
+### Dropping paths into a terminal
+
+As in Terminal, you can type `cd ` and then drag a folder onto the tab: its path appears at the prompt, ready for you to press Return. Spaces and other characters a shell treats specially are escaped (`My Folder` becomes `My\ Folder`). Drop several items to get several paths.
+
+- **From Finder** you get the path on this Mac. That's what the `sftp>` prompt wants for `put` and `lcd`. In a terminal on a server it only helps if the same path exists there.
+- **From the file browser's host pane** (an SFTP tab) you get the path on the server. Drag a folder from there onto a terminal tab connected to the same host to `cd` into it. A drop onto a tab for a different host is refused, since the path wouldn't exist there.
+- Drops work on terminal and `sftp>` tabs while they're connected, not on serial consoles or ended tabs. 7 Term never presses Return for you.
 
 **Right-click a host** for more options: **SFTP Prompt** opens the classic `sftp>` command line, and **Open in Transmit/ForkLift** appears if one of those apps is installed.
 
