@@ -1,5 +1,6 @@
 import SwiftUI
 import SevenTermCore
+import UniformTypeIdentifiers
 
 struct TabStrip: View {
     @Environment(\.chrome) private var chrome
@@ -95,6 +96,9 @@ private struct TabButton: View {
     let focusTerminal: () -> Void
     @State private var isHovering = false
     @State private var isRenaming = false
+    /// A drag is over this tab. Held for half a second, the tab opens, so a
+    /// row dragged from a file browser can be dropped on another tab's terminal.
+    @State private var isDropTargeted = false
 
     var body: some View {
         HStack(spacing: 6) {
@@ -143,8 +147,24 @@ private struct TabButton: View {
                 Rectangle().fill(chrome.accent).frame(height: 2)
             }
         }
+        .overlay {
+            if isDropTargeted {
+                RoundedRectangle(cornerRadius: 2).stroke(chrome.accent, lineWidth: 1.5)
+            }
+        }
         .contentShape(Rectangle())
         .onTapGesture(perform: select)
+        // Dropping on the title types into the tab, by the same rules as a
+        // drop on its terminal; hovering opens it.
+        .onDrop(of: [.fileURL, .plainText], isTargeted: $isDropTargeted) { providers in
+            session.acceptTitleDrop(providers)
+            return true
+        }
+        .task(id: isDropTargeted) {
+            guard isDropTargeted, !isSelected else { return }
+            try? await Task.sleep(for: .milliseconds(500))
+            if isDropTargeted, !Task.isCancelled { select() }
+        }
         // Alongside the single tap, so selecting stays instant.
         .simultaneousGesture(TapGesture(count: 2).onEnded { isRenaming = true })
         .onHover { isHovering = $0 }

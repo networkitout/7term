@@ -2,6 +2,7 @@ import AppKit
 import Observation
 import SwiftTerm
 import SevenTermCore
+import UniformTypeIdentifiers
 
 /// One tab: an ssh or sftp process in a pseudo-terminal, and the view that shows it.
 ///
@@ -132,17 +133,48 @@ final class TerminalSession: Identifiable {
     ///   that browser is connected to the same machine as this tab.
     /// A name holding a control character refuses the whole drop.
     func textForDrop(_ pasteboard: NSPasteboard) -> String? {
+        let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
+        let strings = urls.isEmpty ? (pasteboard.readObjects(forClasses: [NSString.self]) as? [String] ?? []) : []
+        return textForDrop(fileURLs: urls, strings: strings)
+    }
+
+    /// The same rules for a drop whose items arrived some other way (a drop
+    /// on this tab's title in the tab bar): file URLs win; otherwise every
+    /// string must be a host-pane row from the same machine.
+    func textForDrop(fileURLs: [URL], strings: [String]) -> String? {
         guard state == .running, kind == .ssh || kind == .sftp else { return nil }
-        if let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL],
-           !urls.isEmpty {
-            return DroppedPaths.typedText(for: urls.map(\.path))
+        if !fileURLs.isEmpty {
+            return DroppedPaths.typedText(for: fileURLs.map(\.path))
         }
-        guard let strings = pasteboard.readObjects(forClasses: [NSString.self]) as? [String] else { return nil }
         let rows = strings.compactMap(RemoteDragPayload.parse)
         guard !rows.isEmpty, rows.count == strings.count,
               rows.allSatisfy({ remoteTarget?($0.browserID)?.isSameMachine(as: target) == true })
         else { return nil }
         return DroppedPaths.typedText(for: rows.map(\.path))
+    }
+
+    /// Types what a drop on this tab's title carries, by the same rules as a
+    /// drop on the terminal. Items load asynchronously; anything refused types
+    /// nothing.
+    func acceptTitleDrop(_ providers: [NSItemProvider]) {
+        Task { @MainActor in
+            var urls: [URL] = []
+            var strings: [String] = []
+            for provider in providers {
+                if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier),
+                   let data = try? await provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier) as? Data,
+                   let url = URL(dataRepresentation: data, relativeTo: nil), url.isFileURL {
+                    urls.append(url)
+                } else if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier),
+                          let item = try? await provider.loadItem(forTypeIdentifier: UTType.plainText.identifier) {
+                    if let text = item as? String { strings.append(text) }
+                    else if let data = item as? Data, let text = String(data: data, encoding: .utf8) { strings.append(text) }
+                }
+            }
+            guard let text = textForDrop(fileURLs: urls, strings: strings), !text.isEmpty else { return }
+            terminalView.pasteText(text)
+            terminalView.window?.makeFirstResponder(terminalView)
+        }
     }
 
     func start() {
