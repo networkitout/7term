@@ -665,13 +665,12 @@ final class FileBrowser {
     /// What a remote row carries when dragged: this browser's id and the path,
     /// so a drop only ever acts on the connection it came from.
     func dragPayload(for row: FileRow) -> String {
-        "7term-remote:\(id.uuidString):\(remote.fullPath(row))"
+        RemoteDragPayload.make(browserID: id, path: remote.fullPath(row))
     }
 
     /// Remote paths dragged from this browser's right pane; anything else is ignored.
     func remotePaths(fromDrop items: [String]) -> [String] {
-        let prefix = "7term-remote:\(id.uuidString):"
-        return items.compactMap { $0.hasPrefix(prefix) ? String($0.dropFirst(prefix.count)) : nil }
+        items.compactMap(RemoteDragPayload.parse).filter { $0.browserID == id }.map(\.path)
     }
 }
 
