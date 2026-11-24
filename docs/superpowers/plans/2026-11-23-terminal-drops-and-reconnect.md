@@ -18,7 +18,7 @@
 2. A host-pane drag onto a tab for a different machine: refused. (Task 1 test for same-machine; manual check.)
 3. Text dragged in from another app: refused, not typed. (Task 3 manual check.)
 4. A drop on an ended tab: refused. (Task 3 manual check.)
-5. A leading `~` or `-` in a dropped name: escaped so the shell doesn't expand it. (Task 1 test.)
+5. A `~` in a dropped path: escaped so the shell doesn't expand it. (Dropped paths are always absolute, so a leading `-` can't occur.) (Task 1 test.)
 
 ### Task 1: Core: escaping, payload, same machine
 
