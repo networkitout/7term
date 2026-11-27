@@ -50,3 +50,6 @@ GEMINI.md
 .codex/
 .aider*
 .github/copilot-instructions.md
+
+# Plugin session state (anchor-memory), rewritten every session
+.anchor/
