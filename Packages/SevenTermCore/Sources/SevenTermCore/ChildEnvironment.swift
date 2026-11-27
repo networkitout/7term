@@ -22,6 +22,13 @@ public enum ChildEnvironment {
             .map { "\($0.key)=\($0.value)" }
     }
 
+    /// The environment for a local login shell: the same allowlist, plus the
+    /// shell's own path and the terminal's name. The login shell builds the
+    /// rest of PATH itself (path_helper, then the user's profile).
+    public static func makeLocal(from parent: [String: String], shell: String) -> [String] {
+        (make(from: parent) + ["SHELL=\(shell)", "TERM_PROGRAM=7Term"]).sorted()
+    }
+
     private static func nonEmpty(_ value: String?) -> String? {
         guard let value, !value.isEmpty else { return nil }
         return value

@@ -9,7 +9,7 @@ import Foundation
 public struct TabLabel: Equatable, Sendable {
     /// Mirrors the app's tab kinds, which decide the default label's suffix.
     public enum Kind: String, Sendable, CaseIterable {
-        case ssh, sftp, files, serial
+        case ssh, sftp, files, serial, local
     }
 
     /// Longest custom name kept; the tab truncates long labels anyway.
@@ -70,6 +70,7 @@ public struct TabLabel: Equatable, Sendable {
         case .sftp: return base + " · sftp"
         case .files: return base + " · files"
         case .serial: return savedName == nil ? base + " · \(baudRate ?? 9600)" : base
+        case .local: return base
         }
     }
 
