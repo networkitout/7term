@@ -4,7 +4,8 @@ import SwiftTerm
 import SevenTermCore
 import UniformTypeIdentifiers
 
-/// One tab: an ssh or sftp process in a pseudo-terminal, and the view that shows it.
+/// One tab: an ssh or sftp process, or a local login shell, in a
+/// pseudo-terminal, and the view that shows it.
 ///
 /// 7 Term runs its own `LocalProcess` and feeds a plain `TerminalView`, instead
 /// of using SwiftTerm's `LocalProcessTerminalView`. That keeps every output
@@ -20,10 +21,11 @@ final class TerminalSession: Identifiable {
         case failed(String)
     }
 
-    /// What runs in the tab. All use the system OpenSSH tools: a shell, the
-    /// sftp> prompt, or the file browser (ssh's sftp subsystem).
+    /// What runs in the tab: the system OpenSSH tools (a remote shell, the
+    /// sftp> prompt, or the file browser over ssh's sftp subsystem), a serial
+    /// port, or this Mac's own login shell.
     enum Kind: String, Equatable {
-        case ssh, sftp, files, serial
+        case ssh, sftp, files, serial, local
 
         var executable: String { "/usr/bin/\(rawValue)" }
 
@@ -37,13 +39,15 @@ final class TerminalSession: Identifiable {
             case .ssh: return timeout + target.sshArguments
             case .sftp: return timeout + target.sftpArguments
             case .files: return timeout + FileBrowser.sshArguments(for: target)
-            case .serial: return []
+            case .serial, .local: return []
             }
         }
     }
 
     let id = UUID()
     let kind: Kind
+    /// A This Mac tab: the login shell on this Mac, not a connection.
+    var isLocal: Bool { kind == .local }
     let target: SSHTarget
     /// Set when the host's password is in the Keychain: ssh then asks 7 Term
     /// for it (Touch ID) instead of prompting in the terminal.
@@ -128,12 +132,13 @@ final class TerminalSession: Identifiable {
         terminalView.onDropAccepted = { [weak self] in self?.didAcceptDrop?() }
     }
 
-    /// What a drop on this tab types, or nil to refuse it. Only ssh and sftp
-    /// prompt tabs that are connected accept drops: serial devices aren't
-    /// shells, and an ended tab has nothing to type into.
+    /// What a drop on this tab types, or nil to refuse it. Only ssh, sftp
+    /// prompt and local tabs that are running accept drops: serial devices
+    /// aren't shells, and an ended tab has nothing to type into.
     /// - Finder items (and the file browser's Mac pane): their Mac paths.
     /// - Rows from a file browser's host pane: their server paths, only when
-    ///   that browser is connected to the same machine as this tab.
+    ///   that browser is connected to the same machine as this tab. Never for
+    ///   a local tab: a path on a server means nothing on this Mac.
     /// A name holding a control character refuses the whole drop.
     func textForDrop(_ pasteboard: NSPasteboard) -> String? {
         let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
@@ -145,10 +150,11 @@ final class TerminalSession: Identifiable {
     /// on this tab's title in the tab bar): file URLs win; otherwise every
     /// string must be a host-pane row from the same machine.
     func textForDrop(fileURLs: [URL], strings: [String]) -> String? {
-        guard state == .running, kind == .ssh || kind == .sftp else { return nil }
+        guard state == .running, kind == .ssh || kind == .sftp || kind == .local else { return nil }
         if !fileURLs.isEmpty {
             return DroppedPaths.typedText(for: fileURLs.map(\.path))
         }
+        guard kind != .local else { return nil }
         let rows = strings.compactMap(RemoteDragPayload.parse)
         guard !rows.isEmpty, rows.count == strings.count,
               rows.allSatisfy({ remoteTarget?($0.browserID)?.isSameMachine(as: target) == true })
@@ -207,6 +213,11 @@ final class TerminalSession: Identifiable {
         remoteTitle = nil
         state = .running
 
+        if kind == .local {
+            startLocalShell(process)
+            return
+        }
+
         note("connecting to \(target.displayName) with \(kind.rawValue)…")
         var environment = ChildEnvironment.make(from: ProcessInfo.processInfo.environment)
         var arguments = kind.arguments(for: target)
@@ -225,13 +236,29 @@ final class TerminalSession: Identifiable {
         if logByDefault { startLogging() }
     }
 
+    /// The account's login shell, in the home folder, with the local
+    /// allowlisted environment (see `ChildEnvironment.makeLocal`).
+    private func startLocalShell(_ process: LocalProcess) {
+        let shell = LocalShell.current()
+        note("starting \(shell.name) on this Mac…")
+        process.startProcess(
+            executable: shell.path,
+            args: [],
+            environment: ChildEnvironment.makeLocal(from: ProcessInfo.processInfo.environment, shell: shell.path),
+            execName: shell.loginArgv0,
+            currentDirectory: NSHomeDirectory()
+        )
+        if logByDefault { startLogging() }
+    }
+
     func restart() {
         guard state != .running else { return }
         if files != nil {
             start()
             return
         }
-        terminalView.feed(text: "\r\n\u{1b}[2m[reconnecting to \(target.displayName)]\u{1b}[0m\r\n")
+        let line = isLocal ? "[new shell]" : "[reconnecting to \(target.displayName)]"
+        terminalView.feed(text: "\r\n\u{1b}[2m\(line)\u{1b}[0m\r\n")
         start()
     }
 
@@ -344,7 +371,8 @@ final class TerminalSession: Identifiable {
         do {
             let writer = try SessionLogWriter(
                 folder: LogLocation.folder,
-                host: name ?? target.host,
+                // Local logs are named after the Mac, not "This Mac".
+                host: isLocal ? target.host : (name ?? target.host),
                 destination: target.displayName,
                 protocolName: kind.rawValue,
                 segment: logSegmentCount
@@ -411,14 +439,17 @@ final class TerminalSession: Identifiable {
         stopLogging()
         state = .ended(exitCode: exitCode)
         let detail = exitCode.map { ", exit \($0)" } ?? ""
-        terminalView.feed(text: "\r\n\u{1b}[2m[session ended\(detail) · ⇧⌘R to reconnect]\u{1b}[0m\r\n")
+        let line = isLocal
+            ? "[shell exited\(detail) · ⇧⌘R for a new shell]"
+            : "[session ended\(detail) · ⇧⌘R to reconnect]"
+        terminalView.feed(text: "\r\n\u{1b}[2m\(line)\u{1b}[0m\r\n")
     }
 
     fileprivate func failedToStart(_ message: String, from source: ProcessBridge) {
         guard source === bridge else { return }
         stopLogging()
         state = .failed(message)
-        terminalView.feed(text: "\r\n\u{1b}[31m[could not start \(kind.rawValue): \(message)]\u{1b}[0m\r\n")
+        terminalView.feed(text: "\r\n\u{1b}[31m[could not start \(isLocal ? "the shell" : kind.rawValue): \(message)]\u{1b}[0m\r\n")
     }
 
     private func currentWindowSize() -> winsize {

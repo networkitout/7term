@@ -67,6 +67,8 @@ struct SevenTermApp: App {
                     .keyboardShortcut("n", modifiers: .command)
                 Button("Quick Connect…") { sessions.isQuickConnectPresented = true }
                     .keyboardShortcut("t", modifiers: .command)
+                Button("New Local Terminal") { sessions.openLocal() }
+                    .keyboardShortcut("t", modifiers: [.command, .shift])
                 Divider()
                 Button("Import from ~/.ssh/config…") { hosts.presentImport() }
                 Button("Import Hosts (Spreadsheet or Another App)…") { hosts.isSpreadsheetImportPresented = true }
@@ -174,7 +176,9 @@ struct SevenTermApp: App {
                     .disabled(hosts.selectedEntry == nil)
             }
             CommandMenu("Session") {
-                Button("Reconnect") { sessions.reconnectSelected() }
+                Button(sessions.selected?.isLocal == true ? "Restart Shell" : "Reconnect") {
+                    sessions.reconnectSelected()
+                }
                     .keyboardShortcut("r", modifiers: [.command, .shift])
                     .disabled(!sessions.canReconnectSelected)
                 Divider()

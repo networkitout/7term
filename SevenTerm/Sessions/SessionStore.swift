@@ -141,10 +141,34 @@ final class SessionStore {
         logByDefault: Bool = false,
         keychainHost: (id: String, name: String)? = nil
     ) {
-        let session = TerminalSession(
+        add(TerminalSession(
             kind: kind, target: target, name: name, logByDefault: logByDefault,
             keychainHost: keychainHost, appearance: appearance
-        )
+        ))
+    }
+
+    /// File ▸ New Local Terminal (⇧⌘T), or the This Mac row: the login shell
+    /// on this Mac in a new tab.
+    func openLocal() {
+        add(TerminalSession(
+            kind: .local,
+            target: SSHTarget(host: LocalTerminal.machineName(hostName: Self.localHostName())),
+            name: LocalTerminal.title,
+            logByDefault: LocalTerminalSettings.logByDefault,
+            appearance: appearance
+        ))
+    }
+
+    /// gethostname(3), not ProcessInfo.hostName, which can wait on a DNS lookup.
+    private static func localHostName() -> String {
+        var buffer = [CChar](repeating: 0, count: 256)
+        guard gethostname(&buffer, buffer.count - 1) == 0 else { return "" }
+        let length = buffer.firstIndex(of: 0) ?? buffer.count
+        return String(decoding: buffer[..<length].map { UInt8(bitPattern: $0) }, as: UTF8.self)
+    }
+
+    /// Wires a new terminal tab to the store, shows it and starts it.
+    private func add(_ session: TerminalSession) {
         session.remoteTarget = { [weak self] browserID in
             self?.sessions.first { $0.files?.id == browserID }?.target
         }

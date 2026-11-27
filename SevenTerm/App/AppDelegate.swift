@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let count = store.runningCount
         let alert = NSAlert()
         alert.messageText = count == 1 ? "Quit with 1 open session?" : "Quit with \(count) open sessions?"
-        alert.informativeText = "Each SSH connection will be closed."
+        alert.informativeText = "Each SSH connection and local shell will be closed."
         alert.addButton(withTitle: "Quit")
         alert.addButton(withTitle: "Cancel")
         guard alert.runModal() == .alertFirstButtonReturn else { return .terminateCancel }
