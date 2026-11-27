@@ -1,0 +1,10 @@
+2026-11-23T19:25:13.8794853-08:00
+System.IO.FileNotFoundException: Could not load file or assembly 'EasyWindowsTerminalControl, Version=1.0.38.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.
+File name: 'EasyWindowsTerminalControl, Version=1.0.38.0, Culture=neutral, PublicKeyToken=null'
+   at TerminalSpike.MainWindow..ctor() in /Users/laremy/dev/7term/windows/spike/TerminalSpike/MainWindow.xaml.cs:line 16
+   at TerminalSpike.MainWindow..ctor() in /Users/laremy/dev/7term/windows/spike/TerminalSpike/MainWindow.xaml.cs:line 16
+   at TerminalSpike.App.OnStartup(StartupEventArgs e) in /Users/laremy/dev/7term/windows/spike/TerminalSpike/App.xaml.cs:line 26
+   at System.Windows.Application.<.ctor>b__1_0(Object unused)
+   at System.Windows.Threading.ExceptionWrapper.InternalRealCall(Delegate callback, Object args, Int32 numArgs)
+   at System.Windows.Threading.ExceptionWrapper.TryCatchWhen(Object source, Delegate callback, Object args, Int32 numArgs, Delegate catchHandler)
+

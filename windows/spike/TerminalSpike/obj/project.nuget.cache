@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "dgSpecHash": "58SJuIzii7k=",
+  "success": true,
+  "projectFilePath": "/Users/laremy/dev/7term/windows/spike/TerminalSpike/TerminalSpike.csproj",
+  "expectedPackageFiles": [
+    "/Users/laremy/.nuget/packages/ci.microsoft.terminal.wpf/1.25.260303002/ci.microsoft.terminal.wpf.1.25.260303002.nupkg.sha512",
+    "/Users/laremy/.nuget/packages/easywindowsterminalcontrol/1.0.38/easywindowsterminalcontrol.1.0.38.nupkg.sha512",
+    "/Users/laremy/.nuget/packages/microsoft.windows.console.conpty/1.24.260710001/microsoft.windows.console.conpty.1.24.260710001.nupkg.sha512",
+    "/Users/laremy/.nuget/packages/microsoft.netcore.app.ref/10.0.15/microsoft.netcore.app.ref.10.0.15.nupkg.sha512",
+    "/Users/laremy/.nuget/packages/microsoft.netcore.app.runtime.win-arm64/10.0.15/microsoft.netcore.app.runtime.win-arm64.10.0.15.nupkg.sha512",
+    "/Users/laremy/.nuget/packages/microsoft.netcore.app.runtime.win-x64/10.0.15/microsoft.netcore.app.runtime.win-x64.10.0.15.nupkg.sha512",
+    "/Users/laremy/.nuget/packages/microsoft.windowsdesktop.app.ref/10.0.15/microsoft.windowsdesktop.app.ref.10.0.15.nupkg.sha512",
+    "/Users/laremy/.nuget/packages/microsoft.windowsdesktop.app.runtime.win-arm64/10.0.15/microsoft.windowsdesktop.app.runtime.win-arm64.10.0.15.nupkg.sha512",
+    "/Users/laremy/.nuget/packages/microsoft.windowsdesktop.app.runtime.win-x64/10.0.15/microsoft.windowsdesktop.app.runtime.win-x64.10.0.15.nupkg.sha512",
+    "/Users/laremy/.nuget/packages/microsoft.aspnetcore.app.ref/10.0.15/microsoft.aspnetcore.app.ref.10.0.15.nupkg.sha512",
+    "/Users/laremy/.nuget/packages/microsoft.aspnetcore.app.runtime.win-arm64/10.0.15/microsoft.aspnetcore.app.runtime.win-arm64.10.0.15.nupkg.sha512",
+    "/Users/laremy/.nuget/packages/microsoft.aspnetcore.app.runtime.win-x64/10.0.15/microsoft.aspnetcore.app.runtime.win-x64.10.0.15.nupkg.sha512",
+    "/Users/laremy/.nuget/packages/microsoft.netcore.app.host.win-arm64/10.0.15/microsoft.netcore.app.host.win-arm64.10.0.15.nupkg.sha512",
+    "/Users/laremy/.nuget/packages/microsoft.netcore.app.host.win-x64/10.0.15/microsoft.netcore.app.host.win-x64.10.0.15.nupkg.sha512"
+  ],
+  "logs": []
+}
