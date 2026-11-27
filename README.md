@@ -7,7 +7,8 @@
 
 A small, native macOS SSH, SFTP and serial console client: a list of your hosts, one click to connect, tabs, and logging you switch on when you need a record. It opens fast and does a few things well.
 
-<img width="2098" height="1272" alt="image" src="https://github.com/user-attachments/assets/ca5839bc-bb15-4468-a7ca-87e3ffad3e37" />
+<img width="1126" height="707" alt="image" src="https://github.com/user-attachments/assets/0fc9e65c-b1c2-481a-adb5-c11bfa9d839e" />
+
 
 7 Term doesn't reimplement SSH. It runs the Mac's own OpenSSH, so your `~/.ssh/config`, keys, agents (1Password, Secretive, ssh-agent), ProxyJump and `known_hosts` all work exactly as they already do.
 
