@@ -148,3 +148,6 @@ On Linux, `swift test` fails today with `AskPassCaller.swift:1:8: error: no such
 6. Typing `prod` in the filter hides the row, `mac` shows it, and choosing a tag hides it.
 7. Settings ▸ General: turning off "Show This Mac" hides the row while ⇧⌘T still works. "Log local terminals by default" starts logging on new local tabs.
 8. With no saved hosts, the "No Saved Hosts" overlay sits below the row and doesn't cover it.
+9. (From review.) With an ssh tab open, run `lsof -p $$ | grep -c ptmx` in a local tab. It should print `0`: no other tab's terminal is inherited.
+10. (From review.) In one of two local tabs, run `echo marker-$RANDOM` and `sleep 999 &`, then close that tab. The marker is in `~/.zsh_history`, and `pgrep -f "sleep 999"` finds nothing (the job was hung up).
+11. (From review.) Repeat item 8 at the minimum window height. ⇧⌘T also shouldn't trigger View ▸ Show Tab Bar.

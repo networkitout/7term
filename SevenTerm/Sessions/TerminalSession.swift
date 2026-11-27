@@ -233,6 +233,8 @@ final class TerminalSession: Identifiable {
             environment: environment,
             execName: kind.rawValue
         )
+        // Keeps this tab's terminal out of every later child (see CloseOnExec).
+        CloseOnExec.set(process.childfd)
         if logByDefault { startLogging() }
     }
 
@@ -248,6 +250,7 @@ final class TerminalSession: Identifiable {
             execName: shell.loginArgv0,
             currentDirectory: NSHomeDirectory()
         )
+        CloseOnExec.set(process.childfd)
         if logByDefault { startLogging() }
     }
 
@@ -278,7 +281,14 @@ final class TerminalSession: Identifiable {
             note("closed \(serialPort.path)")
             return
         }
-        process?.terminate()
+        if isLocal, let pid = process?.shellPid, pid > 0 {
+            // Interactive shells ignore SIGTERM. Hang up instead, as closing a
+            // Terminal window does: the shell saves its history and passes the
+            // hangup on to its jobs.
+            kill(pid, SIGHUP)
+        } else {
+            process?.terminate()
+        }
     }
 
     // MARK: Serial
