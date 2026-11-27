@@ -9,11 +9,27 @@ struct HostSidebar: View {
     @Environment(\.chrome) private var chrome
     @Environment(HostDirectory.self) private var hosts
     @Environment(SessionStore.self) private var sessions
+    @AppStorage(LocalTerminalSettings.showInSidebarKey) private var showThisMac = true
+    /// Read once: the account's shell doesn't change while 7 Term runs.
+    @State private var localShellName = LocalShell.current().name
+
+    /// This Mac sits above the hosts unless it's turned off in Settings,
+    /// a tag is chosen, or the filter text doesn't match it.
+    private var isThisMacVisible: Bool {
+        showThisMac && hosts.tagFilter == nil
+            && LocalTerminal.matches(query: hosts.query, shellName: localShellName)
+    }
 
     var body: some View {
         @Bindable var hosts = hosts
 
         List(selection: $hosts.selectedID) {
+            if isThisMacVisible {
+                Section {
+                    ThisMacRow(shellName: localShellName, open: { sessions.openLocal() })
+                        .tag(LocalTerminal.sidebarID)
+                }
+            }
             HostTreeRows(nodes: hosts.tree)
         }
         .scrollContentBackground(.hidden)
@@ -25,7 +41,14 @@ struct HostSidebar: View {
             return !itemIDs.isEmpty
         }
         .contextMenu(forSelectionType: String.self) { itemIDs in
-            if let folder = itemIDs.first.flatMap(hosts.folder(id:)) {
+            if itemIDs.first == LocalTerminal.sidebarID {
+                Button("Open Local Terminal") { sessions.openLocal() }
+                Divider()
+                Button("Hide This Mac") {
+                    showThisMac = false
+                    if hosts.selectedID == LocalTerminal.sidebarID { hosts.selectedID = nil }
+                }
+            } else if let folder = itemIDs.first.flatMap(hosts.folder(id:)) {
                 Button("Open All") { hosts.requestOpenAll(in: folder, open: sessions.openAll) }
                     .disabled(hosts.hosts(in: folder).isEmpty)
                 Divider()
@@ -62,7 +85,9 @@ struct HostSidebar: View {
             }
         } primaryAction: { itemIDs in
             guard let id = itemIDs.first else { return }
-            if hosts.folder(id: id) != nil {
+            if id == LocalTerminal.sidebarID {
+                sessions.openLocal()
+            } else if hosts.folder(id: id) != nil {
                 if !hosts.isFiltering { hosts.expandedFolderIDs.formSymmetricDifference([id]) }
             } else if let entry = hosts.entry(id: id) {
                 sessions.open(entry, kind: .ssh)
@@ -205,7 +230,13 @@ struct HostSidebar: View {
         .help("New host (⌘N)")
     }
 
-    @ViewBuilder private var emptyState: some View {
+    /// Pushed below the This Mac row when it shows, so it never covers it.
+    private var emptyState: some View {
+        emptyStateContent
+            .padding(.top, isThisMacVisible ? 64 : 0)
+    }
+
+    @ViewBuilder private var emptyStateContent: some View {
         if hosts.entries.isEmpty && hosts.folders.isEmpty {
             ContentUnavailableView {
                 Label("No Saved Hosts", systemImage: "server.rack")
@@ -319,6 +350,46 @@ private struct FolderRow: View {
             for id in itemIDs { hosts.move(itemID: id, toFolder: folder.id) }
             return !itemIDs.isEmpty
         } isTargeted: { isTargeted = $0 }
+    }
+}
+
+/// The built-in local terminal, pinned above the saved hosts. It isn't a
+/// host: no gear, no drag, and nothing about it is saved.
+private struct ThisMacRow: View {
+    @Environment(\.chrome) private var chrome
+    let shellName: String
+    let open: () -> Void
+    @State private var isHovering = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "desktopcomputer")
+                .font(.system(size: 13))
+                .foregroundStyle(chrome.accent)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(LocalTerminal.title)
+                    .font(Brand.mono(13, weight: .medium))
+                    .lineLimit(1)
+                Text(LocalTerminal.subtitle(shellName: shellName))
+                    .font(Brand.mono(10.5))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            // Shown only on hover, like a host's SSH and SFTP buttons.
+            if isHovering {
+                Button("OPEN", action: open)
+                    .buttonStyle(.borderless)
+                    .font(Brand.mono(10.5, weight: .bold))
+                    .foregroundStyle(chrome.accent)
+                    .help("Open a local terminal (Return, double-click or ⇧⌘T)")
+                    .accessibilityLabel("Open a local terminal on this Mac")
+            }
+        }
+        .contentShape(Rectangle())
+        .onHover { isHovering = $0 }
+        .help("Your login shell on this Mac, in a 7 Term tab")
     }
 }
 

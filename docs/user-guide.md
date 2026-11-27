@@ -112,6 +112,16 @@ Each connection opens in a tab. ⇧⌘] and ⇧⌘[ move between tabs, and ⌘W 
 
 The dot on a tab is green while connected and grey after the session ends. When a session ends, press ⇧⌘R, or right-click its tab and choose **Reconnect**, to reconnect in the same tab. If nothing answers, 7 Term gives up after 15 seconds and says so, rather than waiting in silence.
 
+### This Mac (local terminal)
+
+**This Mac** sits at the top of the host list. Double-click it, press Return, or choose **File ▸ New Local Terminal** (⇧⌘T) to open your own login shell (zsh, or whatever your account uses) in a tab, starting in your home folder.
+
+- It's a tab like any other: find, themes, text size, side by side, dropping Finder paths, and logging (logs are named after this Mac).
+- When the shell exits, press ⇧⌘R, or right-click the tab and choose **Restart Shell**, for a new one in the same tab.
+- The shell gets a clean environment, the same short list ssh gets plus `SHELL` and `TERM_PROGRAM=7Term`, then builds its `PATH` from `/etc/zprofile` and your own profile, as Terminal does.
+- **Settings ▸ General** hides the row (⇧⌘T still works) or starts logging every local tab automatically.
+- This Mac isn't a saved host: it isn't backed up, exported or imported, and it can't be renamed or moved into a folder.
+
 ### Naming and colouring tabs
 
 Several tabs to the same host look alike. To tell them apart, give a tab its own name or a colour. This works for every kind of tab: terminal, `sftp>` prompt, file browser and serial console.
@@ -141,7 +151,7 @@ As in Terminal, you can type `cd ` and then drag a folder onto the tab: its path
 - **From Finder** you get the path on this Mac. That's what the `sftp>` prompt wants for `put` and `lcd`. In a terminal on a server it only helps if the same path exists there.
 - **From the file browser's host pane** (an SFTP tab) you get the path on the server. Drag a folder from there onto a terminal tab connected to the same host to `cd` into it. A drop onto a tab for a different host is refused, since the path wouldn't exist there.
 - To reach another tab while dragging, hold the drag over that tab in the tab bar for a moment and it opens; then drop on its terminal. Dropping straight onto the tab's name works too.
-- Drops work on terminal and `sftp>` tabs while they're connected, not on serial consoles or ended tabs. 7 Term never presses Return for you.
+- Drops work on terminal, This Mac and `sftp>` tabs while they're running, not on serial consoles or ended tabs. A This Mac tab takes Finder paths only, not rows from a host pane. 7 Term never presses Return for you.
 - A name containing a hidden control character, such as a line break, is refused, because the terminal would act on it as it was typed.
 
 **Right-click a host** for more options: **SFTP Prompt** opens the classic `sftp>` command line, and **Open in Transmit/ForkLift** appears if one of those apps is installed.
@@ -280,6 +290,7 @@ After 7 Term updates itself, the first launch shows what changed in a short shee
 | ⌘N | New host |
 | ⇧⌘N | New folder |
 | ⌘T | Quick Connect |
+| ⇧⌘T | New local terminal (This Mac) |
 | Return, double-click, ⌘Return | Open a terminal to the selected host |
 | ⌥⌘Return | Browse files on the selected host |
 | ⌘E / ⌘D / ⌘Delete | Edit / duplicate / delete the selected host |
@@ -287,7 +298,7 @@ After 7 Term updates itself, the first launch shows what changed in a short shee
 | ⌘W | Close tab (closes the window when no tabs are open) |
 | ⇧⌘] / ⇧⌘[ | Next / previous tab |
 | ⌥⌘S | Two tabs side by side, or back to one |
-| ⇧⌘R | Reconnect an ended session |
+| ⇧⌘R | Reconnect an ended session, or start a new shell on This Mac |
 | ⇧⌘L | Start or stop logging the current tab |
 | ⌘F / ⌘G / ⇧⌘G | Find / next / previous in the terminal |
 | ⌘B | Send Break (serial consoles) |

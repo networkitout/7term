@@ -18,6 +18,11 @@ import Testing
         #expect(label.title == "admin@10.0.0.1")
     }
 
+    @Test func localTabKeepsThisMacOverTheShellTitle() {
+        let label = TabLabel(kind: .local, savedName: "This Mac", remoteTitle: "vim ~/x", destination: "mbp")
+        #expect(label.title == "This Mac")
+    }
+
     @Test func remoteTitleIsIgnoredOutsideSSH() {
         let label = TabLabel(kind: .sftp, remoteTitle: "ignored", destination: "me@host")
         #expect(label.title == "me@host · sftp")

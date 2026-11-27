@@ -27,6 +27,7 @@ All 13 milestones are done; 1.2.0 is the first public release.
 | 12 | Import from other tools | Done: Royal TSX, SecureCRT, PuTTY/KiTTY, MobaXterm, FileZilla, Ansible inventory (INI/YAML), Tabby. Royal TSX checked against a real document |
 | 13 | Release | Done: MIT license, Sparkle updates, `tools/release.sh` (Developer ID signing, notarization, signed DMG, appcast, GitHub release). See [releasing.md](releasing.md) |
 | 14 | Folders for hosts, Open All ([design](folders.md)) | Done |
+| 15 | Local terminal (This Mac) ([design](superpowers/specs/2026-11-27-local-terminal-design.md)) | Done |
 
 ### Decided against
 

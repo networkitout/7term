@@ -217,7 +217,7 @@ private struct TabButton: View {
         }
         Divider()
         // The same as Session ▸ Reconnect (⇧⌘R), for the tab clicked.
-        Button("Reconnect") { session.restart() }
+        Button(session.isLocal ? "Restart Shell" : "Reconnect") { session.restart() }
             .disabled(session.state == .running)
         Button("Close Tab", action: close)
     }

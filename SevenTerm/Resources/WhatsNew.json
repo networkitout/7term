@@ -28,5 +28,14 @@
         "detail": "After an update, 7 Term shows what changed, like this. See it again any time with Help ▸ What's New."
       }
     ]
+  },
+  {
+    "version": "1.7.0",
+    "items": [
+      {
+        "title": "This Mac",
+        "detail": "A local terminal is now at the top of the host list: double-click This Mac, or choose File ▸ New Local Terminal (⇧⌘T). It has tabs, find and logging like any session. Hide it in Settings ▸ General."
+      }
+    ]
   }
 ]
