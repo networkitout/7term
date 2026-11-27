@@ -221,6 +221,8 @@ struct SevenTermApp: App {
 
         Settings {
             TabView {
+                GeneralSettings()
+                    .tabItem { Label("General", systemImage: "gearshape") }
                 AppearanceSettings()
                     .tabItem { Label("Appearance", systemImage: "paintpalette") }
                 BackupSettings()
