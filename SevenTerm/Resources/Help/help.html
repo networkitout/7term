@@ -207,6 +207,15 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 </ul>
 <p>Each connection opens in a tab. ⇧⌘] and ⇧⌘[ move between tabs, and ⌘W closes the current one.</p>
 <p>The dot on a tab is green while connected and grey after the session ends. When a session ends, press ⇧⌘R, or right-click its tab and choose <strong>Reconnect</strong>, to reconnect in the same tab. If nothing answers, 7 Term gives up after 15 seconds and says so, rather than waiting in silence.</p>
+<h3 id="this-mac-local-terminal">This Mac (local terminal)</h3>
+<p><strong>This Mac</strong> sits at the top of the host list. Double-click it, press Return, or choose <strong>File ▸ New Local Terminal</strong> (⇧⌘T) to open your own login shell (zsh, or whatever your account uses) in a tab, starting in your home folder.</p>
+<ul>
+<li>It's a tab like any other: find, themes, text size, side by side, dropping Finder paths, and logging (logs are named after this Mac).</li>
+<li>When the shell exits, press ⇧⌘R, or right-click the tab and choose <strong>Restart Shell</strong>, for a new one in the same tab.</li>
+<li>The shell gets a clean environment, the same short list ssh gets plus <code>SHELL</code> and <code>TERM_PROGRAM=7Term</code>, then builds its <code>PATH</code> from <code>/etc/zprofile</code> and your own profile, as Terminal does.</li>
+<li><strong>Settings ▸ General</strong> hides the row (⇧⌘T still works) or starts logging every local tab automatically.</li>
+<li>This Mac isn't a saved host: it isn't backed up, exported or imported, and it can't be renamed or moved into a folder.</li>
+</ul>
 <h3 id="naming-and-colouring-tabs">Naming and colouring tabs</h3>
 <p>Several tabs to the same host look alike. To tell them apart, give a tab its own name or a colour. This works for every kind of tab: terminal, <code>sftp&gt;</code> prompt, file browser and serial console.</p>
 <ul>
@@ -232,7 +241,7 @@ ul, ol { padding-left: 22px; } li { margin: 3px 0; }
 <li><strong>From Finder</strong> you get the path on this Mac. That's what the <code>sftp&gt;</code> prompt wants for <code>put</code> and <code>lcd</code>. In a terminal on a server it only helps if the same path exists there.</li>
 <li><strong>From the file browser's host pane</strong> (an SFTP tab) you get the path on the server. Drag a folder from there onto a terminal tab connected to the same host to <code>cd</code> into it. A drop onto a tab for a different host is refused, since the path wouldn't exist there.</li>
 <li>To reach another tab while dragging, hold the drag over that tab in the tab bar for a moment and it opens; then drop on its terminal. Dropping straight onto the tab's name works too.</li>
-<li>Drops work on terminal and <code>sftp&gt;</code> tabs while they're connected, not on serial consoles or ended tabs. 7 Term never presses Return for you.</li>
+<li>Drops work on terminal, This Mac and <code>sftp&gt;</code> tabs while they're running, not on serial consoles or ended tabs. A This Mac tab takes Finder paths only, not rows from a host pane. 7 Term never presses Return for you.</li>
 <li>A name containing a hidden control character, such as a line break, is refused, because the terminal would act on it as it was typed.</li>
 </ul>
 <p><strong>Right-click a host</strong> for more options: <strong>SFTP Prompt</strong> opens the classic <code>sftp&gt;</code> command line, and <strong>Open in Transmit/ForkLift</strong> appears if one of those apps is installed.</p>
@@ -416,6 +425,10 @@ New Folder, Rename, Copy Path, Show in Finder (this Mac), Delete. Deleting on th
 <td>Quick Connect</td>
 </tr>
 <tr>
+<td>⇧⌘T</td>
+<td>New local terminal (This Mac)</td>
+</tr>
+<tr>
 <td>Return, double-click, ⌘Return</td>
 <td>Open a terminal to the selected host</td>
 </tr>
@@ -445,7 +458,7 @@ New Folder, Rename, Copy Path, Show in Finder (this Mac), Delete. Deleting on th
 </tr>
 <tr>
 <td>⇧⌘R</td>
-<td>Reconnect an ended session</td>
+<td>Reconnect an ended session, or start a new shell on This Mac</td>
 </tr>
 <tr>
 <td>⇧⌘L</td>
